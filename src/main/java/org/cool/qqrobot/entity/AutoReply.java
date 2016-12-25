@@ -9,12 +9,12 @@ public class AutoReply {
 	private Integer id;
 	// QQ号
 	private String account;
-	// 是否允许自动回复 1：true
-	private boolean isAutoReply = false;
+	// 是否允许自动回复 1：true （得选择包装类型，不然页面获取不到属性）
+	private Boolean isAutoReply = false;
 	private Date createTime;
 	private Date updateTime;
 	// 是否自定义回复列表
-	private boolean isSpecial = false;
+	private Boolean isSpecial = false;
 	// 自动回复好友/群/讨论组列表 如果允许全部 则只存放"all"（一对多）
 	private List<ReplyName> replyNameList = new ArrayList<ReplyName>();
 	
@@ -30,10 +30,10 @@ public class AutoReply {
 	public void setAccount(String account) {
 		this.account = account;
 	}
-	public boolean isAutoReply() {
+	public Boolean getIsAutoReply() {
 		return isAutoReply;
 	}
-	public void setAutoReply(boolean isAutoReply) {
+	public void setIsAutoReply(Boolean isAutoReply) {
 		this.isAutoReply = isAutoReply;
 	}
 	public Date getCreateTime() {
@@ -48,10 +48,10 @@ public class AutoReply {
 	public void setUpdateTime(Date updateTime) {
 		this.updateTime = updateTime;
 	}
-	public boolean isSpecial() {
+	public Boolean getIsSpecial() {
 		return isSpecial;
 	}
-	public void setSpecial(boolean isSpecial) {
+	public void setIsSpecial(Boolean isSpecial) {
 		this.isSpecial = isSpecial;
 	}
 	public List<ReplyName> getReplyNameList() {

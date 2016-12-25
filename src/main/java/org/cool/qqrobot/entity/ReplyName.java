@@ -33,6 +33,6 @@ public class ReplyName {
 	}
 	@Override
 	public String toString() {
-		return "ReplyName [pid=" + pid + ", markName=" + markName + ", uin=" + uin + "]";
+		return "ReplyName [pid=" + pid + ", markName=" + markName + ", type=" + type + ", uin=" + uin + "]";
 	}
 }

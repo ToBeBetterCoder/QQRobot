@@ -2,13 +2,18 @@
 <%@include file="common/tag.jsp"%>
 <!DOCTYPE html>
 <html lang="zh-cn">
-  <head>
-    <title>login</title>
-    <%@include file="common/head.jsp"%>
-  </head>
-  <body>
-    <img src="${imageCode}"/>
-
-    <%@include file="common/foot.jsp"%>
-  </body>
+	<head>
+		<title>login</title>
+	    <%@include file="common/head.jsp"%>
+	</head>
+  	<body>
+	    <img src="${imageCode}"/>
+		${friendsViewMap}
+		<br />
+		${discussesViewMap}
+		<br />
+		${groupsViewMap}
+		<br />
+	    <%@include file="common/foot.jsp"%>
+  	</body>
 </html>

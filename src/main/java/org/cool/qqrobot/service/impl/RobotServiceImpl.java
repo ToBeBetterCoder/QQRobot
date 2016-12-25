@@ -3,6 +3,10 @@ package org.cool.qqrobot.service.impl;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Future;
@@ -20,6 +24,7 @@ import org.cool.qqrobot.common.Const;
 import org.cool.qqrobot.common.RobotCodeEnums;
 import org.cool.qqrobot.dao.RobotDao;
 import org.cool.qqrobot.dao.cache.RedisDao;
+import org.cool.qqrobot.entity.AutoReply;
 import org.cool.qqrobot.entity.MyHttpRequest;
 import org.cool.qqrobot.entity.MyHttpResponse;
 import org.cool.qqrobot.entity.ProcessData;
@@ -54,7 +59,7 @@ public class RobotServiceImpl implements RobotService {
 		if (MyHttpResponse.S_OK == codeResponse.getStatus()) {
 			loginCheck(processData);
 		} else {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 		}
 		return codeResponse;
 	}
@@ -71,14 +76,14 @@ public class RobotServiceImpl implements RobotService {
 					try {
 						checkResponse = processData.getMyHttpClient().execute(checkRequest);
 					} catch (Exception e) {
-						processData.setLogin(false);
+						processData.setGetCode(false);
 						logger.error("二维码登录状态获取异常", e);
 					}
 					boolean firstLoginSuccess = false;
 					if (MyHttpResponse.S_OK == checkResponse.getStatus()) {
 						firstLoginSuccess = firstLogin(processData, checkResponse);
 					} else {
-						processData.setLogin(false);
+						processData.setGetCode(false);
 					}
 					try {
 						Thread.sleep(Const.DELAY_TIME);
@@ -90,7 +95,7 @@ public class RobotServiceImpl implements RobotService {
 					}
 					// 轮询时间结束，用户还未扫描登录，自动标识为登录失败（不然下次不能获取二维码，刷新页面二维码不变）
 					if (i == Const.CYCLE_NUM - 1) {
-						processData.setLogin(false);
+						processData.setGetCode(false);
 					}
 				}
 			}
@@ -106,7 +111,7 @@ public class RobotServiceImpl implements RobotService {
 			try {
 				firstLoginResponse = processData.getMyHttpClient().execute(firstLoginRequest);
 			} catch (Exception e) {
-				processData.setLogin(false);
+				processData.setGetCode(false);
 				logger.error("first登陆异常", e);
 			}
 			if (MyHttpResponse.S_OK == firstLoginResponse.getStatus()) {
@@ -114,7 +119,7 @@ public class RobotServiceImpl implements RobotService {
 				getVfwebqq(processData);
 				return true;
 			} else {
-				processData.setLogin(false);
+				processData.setGetCode(false);
 			}
 		}
 		return false;
@@ -128,7 +133,7 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			vfwebqqResponse = processData.getMyHttpClient().execute(vfwebqqRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("vfwebqq获取异常", e);
 		}
 		if (MyHttpResponse.S_OK == vfwebqqResponse.getStatus()) {
@@ -136,7 +141,7 @@ public class RobotServiceImpl implements RobotService {
 				processData.setVfwebqq(MapUtils.getString(MapUtils.getMap(vfwebqqResponse.getJsonMap(), Const.RESULT), Const.VFWEBQQ));
 				secondLogin(processData);
 			} else {
-				processData.setLogin(false);
+				processData.setGetCode(false);
 			}
 		}
 	}
@@ -149,22 +154,34 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			secondLoginResponse = processData.getMyHttpClient().execute(secondLoginRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("second登录异常", e);
 		}
 		if (MyHttpResponse.S_OK == secondLoginResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(secondLoginResponse.getJsonMap(), Const.RET_CODE))) {
-				processData.setSelfUiu(MapUtils.getDouble(MapUtils.getMap(secondLoginResponse.getJsonMap(), Const.RESULT), Const.UIN));
+				processData.setSelfUiu(MapUtils.getObject(MapUtils.getMap(secondLoginResponse.getJsonMap(), Const.RESULT), Const.UIN));
 				processData.setPsessionid(MapUtils.getString(MapUtils.getMap(secondLoginResponse.getJsonMap(), Const.RESULT), Const.P_SESSION_ID));
 				ProcessData dataFromCache = CacheMap.processDataMap.get(processData.getSelfUiu());
-				// 防止重复登陆
+				// 防止重复登陆，当用户session失效后，用户依然可以重复登陆，所以在用户首次登录成功后，以用户QQ号为标识，在CacheMap中记录用户的processData，每次用户登录成功时，判断是否已经登录了，如果之前已经登录，则不进行消息获取。
 				if (null == dataFromCache || !dataFromCache.isLogin()) {
 					// 获取好友列表、群列表、讨论组列表、个人信息（异步）
 					multipleInfoGet(processData);
 					// 获取在线好友  否则如果不先登录webbQQ会报：{"errmsg":"error!!!","retcode":103} 无法获取消息和发送消息
 					if (onlineBuddies(processData)) {
-						// 设置允许自动回复的uin
-						processData.setAutoReply(robotDao.queryAutoReplyNames(processData.getSelfUiu()));
+						// 设置允许自动回复的uin（Tomcat首次启动，数据库经常获取连接失败，现在增加一次获取）
+						try {
+							setAutoReply(processData);
+						} catch (Exception e) {
+							logger.error("获取自动回复列表异常", e);
+							try {
+								logger.debug("重新获取自动回复列表");
+								setAutoReply(processData);
+							} catch (Exception e1) {
+								processData.setGetCode(false);
+								logger.error("重新获取自动回复列表异常", e1);
+								return;
+							}
+						}
 						// 异步轮询获取消息 webQQ轮询获取消息机制：客户端发起一次poll请求,服务端进行轮询，1分钟没有消息返回，则返回{"errmsg":"error!!!","retcode":0}
 						pollMessageThread(processData);
 						// 设置最终登录成功标志
@@ -173,11 +190,18 @@ public class RobotServiceImpl implements RobotService {
 						CacheMap.processDataMap.put(processData.getSelfUiu(), processData);
 					}
 					
+				} else {
+					// session过期，但用户其实还在线，未退出，这时重复登陆时，更新session中的processData
+					processData.update(dataFromCache);
 				}
 			} else {
-				processData.setLogin(false);
+				processData.setGetCode(false);
 			}
 		}
+	}
+
+	private void setAutoReply(ProcessData processData) throws Exception {
+		processData.setAutoReply(robotDao.queryAutoReplyNames(processData.getSelfUiu()));
 	}
 
 	private void multipleInfoGet(ProcessData processData) {
@@ -207,7 +231,7 @@ public class RobotServiceImpl implements RobotService {
 				try {
 					pollMessageResponse = processData.getMyHttpClient().execute(pollMessageRequest);
 				} catch (Exception e) {
-					processData.setLogin(false);
+					processData.setGetCode(false);
 					logger.error("poolMessage异常", e);
 				}
 				if (MyHttpResponse.S_OK == pollMessageResponse.getStatus()) {
@@ -244,14 +268,16 @@ public class RobotServiceImpl implements RobotService {
 	
 	private boolean autoReply(ProcessData processData, String fromUin) {
 		boolean isReply = false;
-		if (null == processData.getAutoReply()) {
+		// 自动回复关闭，则不回复
+		if (null == processData.getAutoReply() || !processData.getAutoReply().getIsAutoReply()) {
 			return isReply;
 		}
-		if (processData.getAutoReply().isSpecial()) {
+		if (processData.getAutoReply().getIsSpecial()) {
 			List<ReplyName> replyNameList = processData.getAutoReply().getReplyNameList();
 			for (ReplyName replyName : replyNameList) {
 				if (fromUin.equals(replyName.getUin())) {
 					isReply = true;
+					break;
 				}
 			}
 		} else {
@@ -325,6 +351,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		return responseContentBuffer.toString();
 	}
+	
 	// 自动回复消息
 	private void sendMessage(ProcessData processData, String pollType, String fromUin, String responseContent) {
 		MyHttpRequest sendMessageRequest = new MyHttpRequest(HttpPost.METHOD_NAME);
@@ -363,7 +390,7 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			friendsResponse = processData.getMyHttpClient().execute(friendsRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("获取好友列表异常", e);
 		}
 		if (MyHttpResponse.S_OK == friendsResponse.getStatus()) {
@@ -384,7 +411,7 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			groupsResponse = processData.getMyHttpClient().execute(groupsRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("获取群列表异常", e);
 		}
 		if (MyHttpResponse.S_OK == groupsResponse.getStatus()) {
@@ -404,7 +431,7 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			discussesResponse = processData.getMyHttpClient().execute(discussesRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("获取讨论组列表异常", e);
 		}
 		if (MyHttpResponse.S_OK == discussesResponse.getStatus()) {
@@ -424,7 +451,7 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			selfInfoResponse = processData.getMyHttpClient().execute(selfInfoRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("获取个人信息异常", e);
 		}
 		if (MyHttpResponse.S_OK == selfInfoResponse.getStatus()) {
@@ -452,15 +479,15 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			onlineBuddiesResponse = processData.getMyHttpClient().execute(onlineBuddiesRequest);
 		} catch (Exception e) {
-			processData.setLogin(false);
+			processData.setGetCode(false);
 			logger.error("获取在线好友列表异常", e);
 		}
 		if (MyHttpResponse.S_OK == onlineBuddiesResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(onlineBuddiesResponse.getJsonMap(), Const.RET_CODE))) {
-				processData.setOnlineBuddiesMap(MapUtils.getMap(onlineBuddiesResponse.getJsonMap(), Const.RESULT));
+				processData.setOnlineBuddiesList((List<Map<String, Object>>) MapUtils.getObject(onlineBuddiesResponse.getJsonMap(), Const.RESULT));
 				return true;
 			} else {
-				processData.setLogin(false);
+				processData.setGetCode(false);
 			}
 		}
 		return false;
@@ -470,7 +497,7 @@ public class RobotServiceImpl implements RobotService {
 		ScriptEngineManager manager = new ScriptEngineManager(); 
 		ScriptEngine engine = manager.getEngineByName(Const.JAVA_SCRIPT);     
 		// 读取js文件 
-		String jsFileName = this.getClass().getClassLoader().getResource("/").getPath().replace(Const.CLASSES, Const.JS).substring(1) + Const.JS_FILE_NAME; 
+		String jsFileName = this.getClass().getClassLoader().getResource(Const.ROOT_PATH).getPath().replace(Const.CLASSES, Const.JS).substring(1) + Const.JS_FILE_NAME; 
 		FileReader reader = null;
 		try {
 			reader = new FileReader(jsFileName);
@@ -492,5 +519,221 @@ public class RobotServiceImpl implements RobotService {
 			}
 		}
 		return "";
+	}
+
+	/*
+	 * 返回样例
+	 * {
+			result: [
+		    	{
+		        	 "cateName": "我的好友",
+		        	 "cateIndex": 0,
+		        	 "cateSort": 0,
+		        	 "list": [
+	        	          {"nick": "小猪", "markname": "珠珠"},
+	        	          {"nick": "小王", "markname": "王尼玛"},
+	        	          {"nick": "小吴", "markname": "吴莫愁"}
+		        	  ]
+		         },
+		         {
+		        	 "category": "同学",
+		        	 "cateIndex": 1,
+		        	 "cateSort": 2,
+		        	 "list": [
+	        	          {"nick": "小猪", "markname": "珠珠"},
+	        	          {"nick": "小王", "markname": "王尼玛"},
+	        	          {"nick": "小吴", "markname": "吴莫愁"}
+		        	  ]
+		         }
+			],
+			retcode: 0
+		}*/
+	@Override
+	public Map<String, Object> buildFriendsList(ProcessData processData) {
+		int retcode = Const.SUCCESS_CODE;
+		Map<String, Object> newFriendsMap = new HashMap<String, Object>();
+		Map<String, Object> friendsMap = processData.getFriendsMap();
+		List<ReplyName> replyNameList = getReplyNameList(processData);
+		List<Map<String, Object>> categoryList = (List<Map<String, Object>>) MapUtils.getObject(friendsMap, Const.CATEGORIES, new ArrayList<Map<String, Object>>());
+		List<Map<String, Object>> resultList = new ArrayList<Map<String, Object>>();
+		try {
+			// Tips 之前采用双括弧初始化map，但是转化成json时为null 原因：通过Gson串行化为json，或者要串行化为xml时，类库中提供的方式，是无法串行化Hashset或者HashMap的子类的，从而导致串行化失败。
+			// 添加默认分组信息
+			Map<String, Object> cateMap = new HashMap<String, Object>();
+			cateMap.put(Const.CATE_INDEX, 0);
+			cateMap.put(Const.CATE_NAME, Const.CATE_NAME_VAL);
+			cateMap.put(Const.CATE_SORT, 0);
+			resultList.add(cateMap);
+			// 组装分组信息
+			for (Map<String, Object> map : categoryList) {
+				cateMap = new HashMap<String, Object>();
+				cateMap.put(Const.CATE_INDEX, MapUtils.getIntValue(map, Const.INDEX));
+				cateMap.put(Const.CATE_NAME, MapUtils.getString(map, Const.NAME));
+				cateMap.put(Const.CATE_SORT, MapUtils.getIntValue(map, Const.SORT));
+				resultList.add(cateMap);
+			}
+			
+			List<Map<String, Object>> friendsWithCatelist = (List<Map<String, Object>>) MapUtils.getObject(friendsMap, Const.FRIENDS, new ArrayList<Map<String, Object>>());
+			List<Map<String, Object>> friendsWithNicklist = (List<Map<String, Object>>) MapUtils.getObject(friendsMap, Const.INFO,  new ArrayList<Map<String, Object>>());
+			List<Map<String, Object>> friendsWithMarkNamelist = (List<Map<String, Object>>) MapUtils.getObject(friendsMap, Const.MARK_NAMES,  new ArrayList<Map<String, Object>>());
+			
+			// 装配uin、昵称和备注的好友列表
+			List<Map<String, Object>> newFriendslist = new ArrayList<Map<String, Object>>();
+			// 拷贝friendsWithNicklist中的nick和uin(为了不影响原数据)
+			Map<String, Object> friendWithNickMap;
+			for (Map<String, Object> map : friendsWithNicklist) {
+				friendWithNickMap = new HashMap<String, Object>();
+				friendWithNickMap.put(Const.NICK, MapUtils.getString(map, Const.NICK));
+				friendWithNickMap.put(Const.UIN, MapUtils.getString(map, Const.UIN));
+				newFriendslist.add(friendWithNickMap);
+			}
+			// 组装组别（利用两组有序的一一对应的下标uin做对比，减少比较次数 O(n)）
+			int j = 0;
+			for (int i = 0; i < friendsWithCatelist.size(); i++) {
+				for (; j < newFriendslist.size(); ) {
+					if (MapUtils.getString(friendsWithCatelist.get(i), Const.UIN).equals(MapUtils.getString(newFriendslist.get(j), Const.UIN))) {
+						newFriendslist.get(j).put(Const.CATE, friendsWithCatelist.get(i).get(Const.CATEGORIES));
+						j++;
+					}
+					break;
+				}
+			}
+			// 组装备注（如果没有备注，则不存在markName属性）
+			int k = 0;
+			for (int i = 0; i < newFriendslist.size(); i++) {
+				for (; k < friendsWithMarkNamelist.size(); ) {
+					if (MapUtils.getString(newFriendslist.get(i), Const.UIN).equals(MapUtils.getString(friendsWithMarkNamelist.get(k), Const.UIN))) {
+						newFriendslist.get(i).put(Const.MARK_NAME, MapUtils.getString(friendsWithMarkNamelist.get(k), Const.MARK_NAME));
+						k++;
+					}
+					break;
+				}
+			}
+			// 按照newFriendslist的组别cate排序，与resultList的组别顺序一致，提高组别分配效率，减少分配次数
+			Collections.sort(newFriendslist, new Comparator<Map<String, Object>>() {
+	
+				@Override
+				public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+					return MapUtils.getIntValue(o1, Const.CATE) - MapUtils.getIntValue(o2, Const.CATE);
+				}
+				
+			});
+			// 分配好友到各组别（只设置nick和markName）
+			int l = 0;
+			Map<String, Object> friendMap;
+			for (int i = 0; i < resultList.size(); i++) {
+				resultList.get(i).put(Const.LIST, new ArrayList<Map<String, Object>>());
+				for (; l < newFriendslist.size(); ) {
+					if (MapUtils.getIntValue(resultList.get(i), Const.CATE_INDEX) == MapUtils.getIntValue(newFriendslist.get(l), Const.CATE)) {
+						friendMap = new HashMap<String, Object>();
+						String nick = MapUtils.getString(newFriendslist.get(l), Const.NICK);
+						String markName = MapUtils.getString(newFriendslist.get(l), Const.MARK_NAME);
+						friendMap.put(Const.NICK, nick);
+						friendMap.put(Const.MARK_NAME, markName);
+						// 设置好友被选标识
+						if (replyNameList != null) {
+							for (ReplyName replyName : replyNameList) {
+								if (Const.PERSON == replyName.getType() && (markName == null ? nick : markName).equals(replyName.getMarkName())) {
+									friendMap.put(Const.SELECT, Const.Y);
+								}
+							}
+						}
+						((List<Map<String, Object>>) MapUtils.getObject(resultList.get(i), Const.LIST)).add(friendMap);
+						l++;
+					} else {
+						break;
+					}
+				}
+			}
+			// 排序组别
+			Collections.sort(resultList, new Comparator<Map<String, Object>>() {
+	
+				@Override
+				public int compare(Map<String, Object> o1, Map<String, Object> o2) {
+					return MapUtils.getIntValue(o1, Const.CATE_SORT) - MapUtils.getIntValue(o2, Const.CATE_SORT);
+				}
+			});
+		} catch (Exception e) {
+			retcode = Const.EXCEPTION_CODE;
+			logger.error("好友列表构建异常", e);
+		}
+		newFriendsMap.put(Const.RESULT, resultList);
+		newFriendsMap.put(Const.RET_CODE, retcode);
+		// 放入过程数据，不用每次都重新构建
+		processData.setFriendsViewMap(newFriendsMap);
+		return newFriendsMap;
+	}
+
+	@Override
+	public Map<String, Object> buildDiscussesList(ProcessData processData) {
+		int retcode = Const.SUCCESS_CODE;
+		Map<String, Object> newDiscussesMap = new HashMap<String, Object>();
+		Map<String, Object> discussesMap = processData.getDiscussesMap();
+		List<ReplyName> replyNameList = getReplyNameList(processData);
+		List<Map<String, Object>> discussesList = (List<Map<String, Object>>) MapUtils.getObject(discussesMap, Const.D_NAME_LIST, new ArrayList<Map<String, Object>>());
+		List<Map<String, Object>> newDiscussesList = new ArrayList<Map<String, Object>>();
+		try {
+			Map<String, Object> discussMap;
+			for (Map<String, Object> map : discussesList) {
+				discussMap = new HashMap<String, Object>();
+				String discussName = MapUtils.getString(map, Const.NAME);
+				discussMap.put(Const.NAME, discussName);
+				if (replyNameList != null) {
+					for (ReplyName replyName : replyNameList) {
+						if (Const.DISCU == replyName.getType() && discussName.equals(replyName.getMarkName())) {
+							discussMap.put(Const.SELECT, Const.Y);
+						}
+					}
+				}
+				newDiscussesList.add(discussMap);
+			}
+		} catch (Exception e) {
+			retcode = Const.EXCEPTION_CODE;
+			logger.error("讨论组列表构建异常", e);
+		}
+		newDiscussesMap.put(Const.RESULT, newDiscussesList);
+		newDiscussesMap.put(Const.RET_CODE, retcode);
+		processData.setDiscussesViewMap(newDiscussesMap);
+		return newDiscussesMap;
+	}
+
+	@Override
+	public Map<String, Object> buildGroupsList(ProcessData processData) {
+		int retcode = Const.SUCCESS_CODE;
+		Map<String, Object> newGroupsMap = new HashMap<String, Object>();
+		Map<String, Object> groupsMap = processData.getGroupsMap();
+		List<ReplyName> replyNameList = getReplyNameList(processData);
+		List<Map<String, Object>> groupsList = (List<Map<String, Object>>) MapUtils.getObject(groupsMap, Const.G_NAME_LIST, new ArrayList<Map<String, Object>>());
+		List<Map<String, Object>> newGroupsList = new ArrayList<Map<String, Object>>();
+		try {
+			Map<String, Object> GroupMap;
+			for (Map<String, Object> map : groupsList) {
+				GroupMap = new HashMap<String, Object>();
+				String groupName = MapUtils.getString(map, Const.NAME);
+				GroupMap.put(Const.NAME, groupName);
+				if (replyNameList != null) {
+					for (ReplyName replyName : replyNameList) {
+						if (Const.GROUP == replyName.getType() && groupName.equals(replyName.getMarkName())) {
+							GroupMap.put(Const.SELECT, Const.Y);
+						}
+					}
+				}
+				newGroupsList.add(GroupMap);
+			}
+		} catch (Exception e) {
+			retcode = Const.EXCEPTION_CODE;
+			logger.error("群列表构建异常", e);
+		}
+		newGroupsMap.put(Const.RESULT, newGroupsList);
+		newGroupsMap.put(Const.RET_CODE, retcode);
+		processData.setGroupsViewMap(newGroupsMap);
+		return newGroupsMap;
+	}
+	
+	// 获取自动回复的名单（如果之前设置过）
+	private List<ReplyName> getReplyNameList(ProcessData processData) {
+		AutoReply autoReply = processData.getAutoReply();
+		List<ReplyName> replyNameList = (autoReply == null ? null : autoReply.getReplyNameList());
+		return replyNameList;
 	}
 }

@@ -1,0 +1,47 @@
+.panel-title a {
+	text-decoration: none;
+	display: inline-block;
+	width: 90%;
+}
+.panel-title .glyphicon {
+	color: #ccc;
+}
+.panel-default {
+	border-width: 0px 0px 1px 0px;
+ 			box-shadow: 0 0 0;
+}
+.panel-default .panel-heading {
+	background-color: #fff;
+}
+body { 
+	padding-top: 212px; 
+	background-color: #fff;
+}
+.navbar {
+	background-color: #fff;
+}
+.panel-group .panel+.panel {
+	margin-top: 0;
+}
+.panel-group .list-group-item span {
+	display: inline-block;
+	width: 90%;
+	padding-left: 25px;
+}
+.panel-group .list-group-item label {
+	display: inline;
+	font-weight: normal;
+}
+.badge {
+	background-color: transparent;
+	padding: 0;
+}
+.list-with-switch li {
+	height: 52px;
+  	line-height: 32px;
+}
+.list-with-switch .list-group-item {
+	border-radius: 0;
+	border-left-width: 0;
+	border-right-width: 0;
+}

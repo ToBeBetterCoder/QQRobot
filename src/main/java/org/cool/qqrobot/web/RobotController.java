@@ -1,12 +1,16 @@
 package org.cool.qqrobot.web;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.collections.MapUtils;
 import org.cool.qqrobot.common.Const;
+import org.cool.qqrobot.entity.AutoReply;
 import org.cool.qqrobot.entity.MyHttpResponse;
 import org.cool.qqrobot.entity.ProcessData;
-import org.cool.qqrobot.http.MyHttpClient;
 import org.cool.qqrobot.service.RobotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +19,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+
+import com.google.gson.Gson;
 /**
  * 主控制器，负责获取二维码登录以及登出等
  * @author zhoukl
@@ -30,11 +36,32 @@ public class RobotController {
 	
 	@RequestMapping(value="/getCodeToLogin", method = RequestMethod.GET)
 	public String getCodeToLogin(HttpSession session, Model model) {
-		// TODO: 当用户session失效后，用户依然可以重复登陆，所以在用户首次登录成功后，以用户QQ号为标识，在redis中记录用户的登录状态，每次用户登录成功时，判断是否已经登录了，如果之前已经登录，则不进行消息获取。
 		// 通过session判断 防止同一用户多次刷新获取二维码
-		Object obj = session.getAttribute(Const.PROCESS_DATA);
-		if (obj instanceof ProcessData && ((ProcessData) obj).isLogin()) {
-			model.addAttribute("imageCode", ((ProcessData) obj).getImageCode());
+		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
+		if (null != processDataSession && processDataSession.isLogin()) {
+			// 登陆后可以设置是否自动回复，是否自定义回复名单
+			AutoReply autoReply = processDataSession.getAutoReply();
+			Map<String, Object> friendsViewMap = processDataSession.getFriendsViewMap();
+			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(friendsViewMap, Const.RET_CODE))) {
+				friendsViewMap = robotService.buildFriendsList(processDataSession);
+			}
+			Map<String, Object> discussesViewMap = processDataSession.getDiscussesViewMap();
+			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(discussesViewMap, Const.RET_CODE))) {
+				discussesViewMap = robotService.buildDiscussesList(processDataSession);
+			}
+			Map<String, Object> groupsViewMap = processDataSession.getGroupsViewMap();
+			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(groupsViewMap, Const.RET_CODE))) {
+				groupsViewMap = robotService.buildGroupsList(processDataSession);
+			}
+			model.addAttribute("autoReply", autoReply);
+			model.addAttribute("friendsViewMap", friendsViewMap);
+			model.addAttribute("discussesViewMap", discussesViewMap);
+			model.addAttribute("groupsViewMap", groupsViewMap);
+			return "settings";
+		} if (null != processDataSession && processDataSession.isGetCode()) {
+			// 防止刷新重复获取二维码
+			model.addAttribute("imageCode", processDataSession.getImageCode());
+			return "login";
 		} else {
 			ProcessData processData = new ProcessData();
 			session.setAttribute(Const.PROCESS_DATA, processData);
@@ -45,10 +72,10 @@ public class RobotController {
 						+ Base64.encodeBase64String(getCodeResponse.getImageCode());
 				model.addAttribute("imageCode", imageCode);
 				processData.setImageCode(imageCode);
-				// 设置登录成功标志，防止用户多次刷新页面，启动多个线程，造成浪费（理论上应该在登录成功后设置标识，这里过早，所以后面如果发生异常未登录成功，再捕获异常，取消登录成功标志，最终登录成功后再设置为成功）
-				processData.setLogin(true);
+				// 设置二维码获取成功标识
+				processData.setGetCode(true);
 			}
+			return "login";
 		}
-		return "login";
 	}
 }

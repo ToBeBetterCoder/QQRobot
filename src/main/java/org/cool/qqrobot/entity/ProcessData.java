@@ -17,6 +17,8 @@ import org.cool.qqrobot.http.MyHttpClient;
  *
  */
 public class ProcessData {
+	// 成功登录前的二维码获取控制
+	private boolean isGetCode = false;
 	private boolean isLogin = false;
 	private transient String imageCode;
 	private String ptwebqq;
@@ -34,10 +36,21 @@ public class ProcessData {
 	// 个人信息
 	private transient UserInfo userInfo;
 	// 在线好友
-	private transient Map<String, Object> onlineBuddiesMap = new HashMap<String, Object>();
+	private transient List<Map<String, Object>> onlineBuddiesList = new ArrayList<Map<String, Object>>();
 	// 自动回复列表 根据用户昵称查询用户uin，保存后，每次回复消息首先检查是否允许自动回复该uin
 	private AutoReply autoReply;
-	
+	// 页面展示的好友列表
+	private Map<String, Object> friendsViewMap = new HashMap<String, Object>();
+	// 页面展示的群列表
+	private Map<String, Object> groupsViewMap = new HashMap<String, Object>();
+	// 页面展示的讨论组列表
+	private Map<String, Object> discussesViewMap = new HashMap<String, Object>();
+	public boolean isGetCode() {
+		return isGetCode;
+	}
+	public void setGetCode(boolean isGetCode) {
+		this.isGetCode = isGetCode;
+	}
 	public String getPtwebqq() {
 		return ptwebqq;
 	}
@@ -47,7 +60,7 @@ public class ProcessData {
 	public String getSelfUiu() {
 		return selfUiu;
 	}
-	public void setSelfUiu(Double selfUiu) {
+	public void setSelfUiu(Object selfUiu) {
 		this.selfUiu = new DecimalFormat("#").format(selfUiu);
 	}
 	public String getPsessionid() {
@@ -101,11 +114,11 @@ public class ProcessData {
 	public void setUserInfo(UserInfo userInfo) {
 		this.userInfo = userInfo;
 	}
-	public Map<String, Object> getOnlineBuddiesMap() {
-		return onlineBuddiesMap;
+	public List<Map<String, Object>> getOnlineBuddiesList() {
+		return onlineBuddiesList;
 	}
-	public void setOnlineBuddiesMap(Map<String, Object> onlineBuddiesMap) {
-		this.onlineBuddiesMap = onlineBuddiesMap;
+	public void setOnlineBuddiesList(List<Map<String, Object>> onlineBuddiesList) {
+		this.onlineBuddiesList = onlineBuddiesList;
 	}
 	public AutoReply getAutoReply() {
 		return autoReply;
@@ -115,6 +128,24 @@ public class ProcessData {
 			uinSet(autoReply);
 		}
 		this.autoReply = autoReply;
+	}
+	public Map<String, Object> getFriendsViewMap() {
+		return friendsViewMap;
+	}
+	public void setFriendsViewMap(Map<String, Object> friendsViewMap) {
+		this.friendsViewMap = friendsViewMap;
+	}
+	public Map<String, Object> getGroupsViewMap() {
+		return groupsViewMap;
+	}
+	public void setGroupsViewMap(Map<String, Object> groupsViewMap) {
+		this.groupsViewMap = groupsViewMap;
+	}
+	public Map<String, Object> getDiscussesViewMap() {
+		return discussesViewMap;
+	}
+	public void setDiscussesViewMap(Map<String, Object> discussesViewMap) {
+		this.discussesViewMap = discussesViewMap;
 	}
 	// 根据名称匹配uin
 	private void uinSet(AutoReply autoReply) {
@@ -155,5 +186,28 @@ public class ProcessData {
 				}
 			}
 		}
+	}
+	/**
+	 * 更新对象
+	 * @param processData
+	 */
+	public void update(ProcessData processData) {
+		this.isGetCode = processData.isGetCode;
+		this.isLogin = processData.isLogin;
+		this.imageCode = processData.getImageCode();
+		this.ptwebqq = processData.getPtwebqq();
+		this.selfUiu = processData.getSelfUiu();
+		this.psessionid = processData.getPsessionid();
+		this.vfwebqq = processData.getVfwebqq();
+		this.myHttpClient = processData.getMyHttpClient();
+		this.friendsMap = processData.getFriendsMap();
+		this.groupsMap = processData.getGroupsMap();
+		this.discussesMap = processData.getDiscussesMap();
+		this.userInfo = processData.getUserInfo();
+		this.onlineBuddiesList = processData.getOnlineBuddiesList();
+		this.autoReply = processData.getAutoReply();
+		this.friendsViewMap = processData.getFriendsViewMap();
+		this.groupsViewMap = processData.getGroupsViewMap();
+		this.discussesViewMap = processData.getDiscussesViewMap();
 	}
 }

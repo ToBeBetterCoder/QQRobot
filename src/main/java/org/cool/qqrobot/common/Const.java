@@ -36,7 +36,7 @@ public class Const {
 	/**
 	 * 客户端是否授权登录，循环监测次数
 	 */
-	public static final int CYCLE_NUM = 100;
+	public static final int CYCLE_NUM = 120;
 	/**
 	 * 延迟时间
 	 */
@@ -66,6 +66,7 @@ public class Const {
 	public static final String MARK_NAME = "markname";
 	public static final String NAME = "name";
 	public static final String INFO = "info";
+	public static final String FRIENDS = "friends";
 	public static final String G_NAME_LIST = "gnamelist";
 	public static final String G_ID = "gid";
 	public static final String D_NAME_LIST = "dnamelist";
@@ -99,11 +100,11 @@ public class Const {
 	/**
 	 * 账号
 	 */
-	public static final Object UIN = "uin";
+	public static final String UIN = "uin";
 	/**
 	 * 个人标识
 	 */
-	public static final Object P_SESSION_ID = "psessionid";
+	public static final String P_SESSION_ID = "psessionid";
 	public static final String JAVA_SCRIPT = "javascript";
 	public static final String JS_FILE_NAME = "hash.js";
 	public static final String JS_HASH = "hash2";
@@ -157,5 +158,16 @@ public class Const {
 	 * 菜谱显示条数（原样返回，条数太多，似乎不能接收到消息）
 	 */
 	public static final int COOK_MAX_NUM = 3;
+	public static final String ROOT_PATH = "/";
+	public static final String CATEGORIES = "categories";
+	public static final String CATE_INDEX = "cateIndex";
+	public static final String CATE_NAME = "cateName";
+	public static final String CATE_NAME_VAL = "我的好友";
+	public static final String CATE_SORT = "cateSort";
+	public static final String INDEX = "index";
+	public static final String SORT = "sort";
+	public static final String CATE = "cate";
+	public static final String SELECT = "select";
+	public static final String Y = "Y";
 	
 }
