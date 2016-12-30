@@ -147,7 +147,7 @@ public class ProcessData {
 	public void setDiscussesViewMap(Map<String, Object> discussesViewMap) {
 		this.discussesViewMap = discussesViewMap;
 	}
-	// 根据名称匹配uin
+	// 根据名称匹配uin（存在问题：第一匹配效率低，比较次数多；第二如果有重复的好友名称，则只能取到第一个）
 	private void uinSet(AutoReply autoReply) {
 		List<ReplyName> replyNameList = autoReply.getReplyNameList();
 		for (ReplyName replyName : replyNameList) {
@@ -157,6 +157,7 @@ public class ProcessData {
 				for (Map<String, Object> map : marknamesList) {
 					if (replyName.getMarkName().equals(MapUtils.getString(map, Const.MARK_NAME))) {
 						replyName.setUin(new DecimalFormat("#").format(MapUtils.getObject(map, Const.UIN)));
+						return;
 					}
 				}
 				// marknames找不到再去info找
@@ -165,6 +166,7 @@ public class ProcessData {
 					for (Map<String, Object> map : infoList) {
 						if (replyName.getMarkName().equals(MapUtils.getString(map, Const.NICK))) {
 							replyName.setUin(new DecimalFormat("#").format(MapUtils.getObject(map, Const.UIN)));
+							return;
 						}
 					}
 				}
@@ -174,6 +176,7 @@ public class ProcessData {
 				for (Map<String, Object> map : gnameList) {
 					if (replyName.getMarkName().equals(MapUtils.getString(map, Const.NAME))) {
 						replyName.setUin(new DecimalFormat("#").format(MapUtils.getObject(map, Const.G_ID)));
+						return;
 					}
 				}
 			}
@@ -182,6 +185,7 @@ public class ProcessData {
 				for (Map<String, Object> map : dnameList) {
 					if (replyName.getMarkName().equals(MapUtils.getString(map, Const.NAME))) {
 						replyName.setUin(new DecimalFormat("#").format(MapUtils.getObject(map, Const.D_ID)));
+						return;
 					}
 				}
 			}
@@ -191,7 +195,7 @@ public class ProcessData {
 	 * 更新对象
 	 * @param processData
 	 */
-	public void update(ProcessData processData) {
+	/*public void update(ProcessData processData) {
 		this.isGetCode = processData.isGetCode;
 		this.isLogin = processData.isLogin;
 		this.imageCode = processData.getImageCode();
@@ -209,5 +213,5 @@ public class ProcessData {
 		this.friendsViewMap = processData.getFriendsViewMap();
 		this.groupsViewMap = processData.getGroupsViewMap();
 		this.discussesViewMap = processData.getDiscussesViewMap();
-	}
+	}*/
 }

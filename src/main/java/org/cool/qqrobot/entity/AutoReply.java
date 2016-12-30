@@ -15,7 +15,7 @@ public class AutoReply {
 	private Date updateTime;
 	// 是否自定义回复列表
 	private Boolean isSpecial = false;
-	// 自动回复好友/群/讨论组列表 如果允许全部 则只存放"all"（一对多）
+	// 自动回复好友/群/讨论组列表（一对多）
 	private List<ReplyName> replyNameList = new ArrayList<ReplyName>();
 	
 	public Integer getId() {

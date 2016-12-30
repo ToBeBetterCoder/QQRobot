@@ -15,6 +15,7 @@ import java.util.concurrent.TimeUnit;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.servlet.http.HttpSession;
 
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -30,18 +31,20 @@ import org.cool.qqrobot.entity.MyHttpResponse;
 import org.cool.qqrobot.entity.ProcessData;
 import org.cool.qqrobot.entity.ReplyName;
 import org.cool.qqrobot.entity.UserInfo;
+import org.cool.qqrobot.exception.RobotException;
 import org.cool.qqrobot.service.RobotService;
 import org.cool.qqrobot.thread.ThreadPool;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RobotServiceImpl implements RobotService {
 
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
-	
+	private HttpSession session = null;
 	@Autowired
 	private RobotDao robotDao;
 	@Autowired
@@ -174,6 +177,7 @@ public class RobotServiceImpl implements RobotService {
 						} catch (Exception e) {
 							logger.error("获取自动回复列表异常", e);
 							try {
+								Thread.sleep(Const.DELAY_TIME);
 								logger.debug("重新获取自动回复列表");
 								setAutoReply(processData);
 							} catch (Exception e1) {
@@ -192,7 +196,7 @@ public class RobotServiceImpl implements RobotService {
 					
 				} else {
 					// session过期，但用户其实还在线，未退出，这时重复登陆时，更新session中的processData
-					processData.update(dataFromCache);
+					this.session.setAttribute(Const.PROCESS_DATA, dataFromCache);
 				}
 			} else {
 				processData.setGetCode(false);
@@ -220,7 +224,6 @@ public class RobotServiceImpl implements RobotService {
 	private void pollMessageThread(ProcessData processData) {
 		// TODO 把每一个轮询线程对象保存到map中，便于终止轮询（key:qq号，value:Future对象），同时清除登录成功的缓存信息
 		Future<?> future = ThreadPool.getInstance().getScheduledThreadPool().scheduleAtFixedRate(new Runnable() {
-			
 			@Override
 			public void run() {
 				MyHttpRequest pollMessageRequest = new MyHttpRequest(HttpPost.METHOD_NAME);
@@ -397,6 +400,7 @@ public class RobotServiceImpl implements RobotService {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(friendsResponse.getJsonMap(), Const.RET_CODE))) {
 				processData.setFriendsMap(MapUtils.getMap(friendsResponse.getJsonMap(), Const.RESULT));
 			} else {
+				processData.setGetCode(false);
 				logger.error("获取好友列表异常");
 			}
 		}
@@ -418,6 +422,7 @@ public class RobotServiceImpl implements RobotService {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(groupsResponse.getJsonMap(), Const.RET_CODE))) {
 				processData.setGroupsMap(MapUtils.getMap(groupsResponse.getJsonMap(), Const.RESULT));
 			} else {
+				processData.setGetCode(false);
 				logger.error("获取群列表异常");
 			}
 		}
@@ -438,6 +443,7 @@ public class RobotServiceImpl implements RobotService {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(discussesResponse.getJsonMap(), Const.RET_CODE))) {
 				processData.setDiscussesMap(MapUtils.getMap(discussesResponse.getJsonMap(), Const.RESULT));
 			} else {
+				processData.setGetCode(false);
 				logger.error("获取讨论组列表异常");
 			}
 		}
@@ -735,5 +741,71 @@ public class RobotServiceImpl implements RobotService {
 		AutoReply autoReply = processData.getAutoReply();
 		List<ReplyName> replyNameList = (autoReply == null ? null : autoReply.getReplyNameList());
 		return replyNameList;
+	}
+
+	@Override
+	@Transactional
+	public void updateReplyNameList(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException {
+		try {
+			// 插入新数据，如果存在则更新为启用
+			List<Map<String, Object>> addList = (ArrayList<Map<String, Object>>) MapUtils.getObject(paramMap, Const.ADD_KEY, new ArrayList<Map<String, Object>>());
+			if (!addList.isEmpty()) {
+				robotDao.insertOrUpdateReplyNameList(addList, processDataSession.getSelfUiu());
+			}
+			// 更新数据库，禁用回复名单
+			List<Map<String, Object>> delList = (ArrayList<Map<String, Object>>) MapUtils.getObject(paramMap, Const.DEL_KEY, new ArrayList<Map<String, Object>>());
+			if (!delList.isEmpty()) {
+				robotDao.disableReplyNameList(delList, processDataSession.getSelfUiu());
+			}
+			// 更新过程数据
+			setAutoReply(processDataSession);
+			// 页面联系人视图设置过期标识（需要更新）
+			contactsListViewExpired(processDataSession);
+		} catch (Exception e) {
+			logger.error("设置自定义回复名单异常", e);
+			// 所有编译期异常转化为运行期异常，便于事务回滚
+			throw new RobotException(e.getMessage(), e);
+		}
+	}
+
+	private void contactsListViewExpired(ProcessData processDataSession) {
+		if (MapUtils.isNotEmpty(processDataSession.getFriendsViewMap())) {
+			processDataSession.getFriendsViewMap().put(Const.RET_CODE, Const.LIST_VIEW_EXPIRED);
+		}
+		if (MapUtils.isNotEmpty(processDataSession.getGroupsViewMap())) {
+			processDataSession.getGroupsViewMap().put(Const.RET_CODE, Const.LIST_VIEW_EXPIRED);
+		}
+		if (MapUtils.isNotEmpty(processDataSession.getDiscussesViewMap())) {
+			processDataSession.getDiscussesViewMap().put(Const.RET_CODE, Const.LIST_VIEW_EXPIRED);
+		}
+	}
+
+	@Override
+	public boolean updateIsAutoReply(int autoReplyfalg, ProcessData processDataSession) {
+		try {
+			robotDao.updateIsAutoReply(autoReplyfalg, processDataSession.getSelfUiu());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		processDataSession.getAutoReply().setIsAutoReply(null);
+		return false;
+	}
+
+	@Override
+	public boolean updateIsSpecial(int specialfalg, ProcessData processDataSession) {
+		try {
+			robotDao.updateIsSpecial(specialfalg, processDataSession.getSelfUiu());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		processDataSession.getAutoReply().setIsSpecial(null);
+		return false;
+	}
+
+	@Override
+	public void sessionSetter(HttpSession session) {
+		this.session = session;
 	}
 }

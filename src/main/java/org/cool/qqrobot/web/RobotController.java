@@ -8,19 +8,23 @@ import javax.servlet.http.HttpSession;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.MapUtils;
 import org.cool.qqrobot.common.Const;
+import org.cool.qqrobot.common.RobotCodeEnums;
+import org.cool.qqrobot.dto.RobotResult;
 import org.cool.qqrobot.entity.AutoReply;
 import org.cool.qqrobot.entity.MyHttpResponse;
 import org.cool.qqrobot.entity.ProcessData;
+import org.cool.qqrobot.exception.RobotException;
 import org.cool.qqrobot.service.RobotService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.ResponseBody;
 
-import com.google.gson.Gson;
 /**
  * 主控制器，负责获取二维码登录以及登出等
  * @author zhoukl
@@ -65,6 +69,7 @@ public class RobotController {
 		} else {
 			ProcessData processData = new ProcessData();
 			session.setAttribute(Const.PROCESS_DATA, processData);
+			robotService.sessionSetter(session);
 			MyHttpResponse getCodeResponse = robotService.getCode(processData);
 			String imageCode = null;
 			if (MyHttpResponse.S_OK == getCodeResponse.getStatus()) {
@@ -77,5 +82,23 @@ public class RobotController {
 			}
 			return "login";
 		}
+	}
+	
+	@RequestMapping(value="/submitList", method = RequestMethod.POST)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> submitList(@RequestBody Map<String, Object> paramMap, HttpSession session) {
+		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
+		if (null == processDataSession) {
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
+		}
+		try {
+			Map<String, Object> responseMap = new HashMap<String, Object>();
+			responseMap.put("info", RobotCodeEnums.LIST_SUBMIT_SUCCESS.getCodeInfo());
+			robotService.updateReplyNameList(paramMap, processDataSession);
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.LIST_SUBMIT_SUCCESS.getCode(), responseMap);
+		} catch (RobotException e) {
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.LIST_SUBMIT_FAIL.getCode(), RobotCodeEnums.LIST_SUBMIT_FAIL.getCodeInfo());
+		}
+		
 	}
 }

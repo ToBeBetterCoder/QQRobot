@@ -54,6 +54,10 @@ public class Const {
 	 */
 	public static final Integer EXCEPTION_CODE = -1;
 	/**
+	 * 联系人列表失效，需重新构建
+	 */
+	public static final Integer LIST_VIEW_EXPIRED = 1;
+	/**
 	 * 返回结果集的key
 	 */
 	public static final String RESULT = "result";
@@ -169,5 +173,7 @@ public class Const {
 	public static final String CATE = "cate";
 	public static final String SELECT = "select";
 	public static final String Y = "Y";
+	public static final String ADD_KEY = "add";
+	public static final String DEL_KEY = "del";
 	
 }

@@ -6,10 +6,53 @@
 	<!-- 目的：为DAO接口方法提供sql语句配置 -->
 	<!-- keyProperty="id" 返回主键给对象属性id -->
 	<insert id="addLoginInfo" keyProperty="id">
-		insert into robot_user_info(account, gender, nick, lnick, detail)
-		values (#{account}, #{gender}, #{nick}, #{lnick}, #{detail});
+		INSERT INTO `robot_user_info` (account, gender, nick, lnick, detail)
+		VALUES (#{account}, #{gender}, #{nick}, #{lnick}, #{detail});
 	</insert>
-	
+	<!-- 插入或更新自定义回复的名单 -->
+	<insert id="insertOrUpdateReplyNameList">
+		INSERT INTO `robot_auto_reply_list` (pid, mark_name, type, state)
+		VALUES
+		<foreach collection="list" item="contact" separator=",">
+			(#{selfUiu}, #{contact.name}, #{contact.type}, 0)
+		</foreach>
+		ON DUPLICATE KEY UPDATE state = 0;
+	</insert>
+	<!-- 取消自定义回复的名单 -->
+	<update id="disableReplyNameList">
+		<foreach collection="list"  item="contact" separator=";">
+			UPDATE `robot_auto_reply_list`
+			<set>
+				state = 1
+			</set>
+			<where>
+				pid = #{selfUiu} AND mark_name = #{contact.name} AND type = #{contact.type}
+			</where>
+    	</foreach>
+	</update>
+	<!-- 是否自动回复 -->
+	<!-- <update id="">
+		UPDATE `robot_auto_reply` SET is_auto_reply = ${} WHERE account = ${};
+	</update> -->
+	<!-- 是否自定义回复 -->
+	<!-- <update id="">
+		UPDATE `robot_auto_reply` SET is_special = ${} WHERE account = ${};
+	</update> -->
+	<!-- 获取回复列表 （resultMap引用不能漏） -->
+	<select id="queryAutoReplyNames" resultType="AutoReply" resultMap="queryAutoReply">
+		SELECT
+			reply.id,
+			reply.account,
+			reply.is_auto_reply,
+			reply.is_special,
+			reply.create_time,
+			reply.update_time,
+			list.mark_name,
+			list.type
+		FROM robot_auto_reply reply LEFT JOIN robot_auto_reply_list list
+		ON reply.account = list.pid AND list.state = 0
+		WHERE reply.account = #{account}
+	</select>
 	<resultMap type="AutoReply" id="queryAutoReply">
 		<id property="id" column="id"/>
 		<result property="account" column="account"/>
@@ -23,19 +66,4 @@
 			<result property="type" column="type"/>
 		</collection>
 	</resultMap>
-	<!-- resultMap引用不能漏 -->
-	<select id="queryAutoReplyNames" resultType="AutoReply" resultMap="queryAutoReply">
-		select
-			reply.id,
-			reply.account,
-			reply.is_auto_reply,
-			reply.is_special,
-			reply.create_time,
-			reply.update_time,
-			list.mark_name,
-			list.type
-		from robot_auto_reply reply left join robot_auto_reply_list list
-		on reply.id = list.pid
-		where reply.account = #{account}
-	</select>
 </mapper>
