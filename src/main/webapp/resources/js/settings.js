@@ -6,6 +6,9 @@ settings = (function() {
 			del: []
 		};
 	var _submitList = function() {
+		// 清空原来数据
+		_replyList.add = [];
+		_replyList.del = [];
 		$('input[name="my-select-checkbox"]').each(function() {
 			var afterCheck = $(this).prop("checked");
 			var beforeCheck = eval($(this).attr("select"));
@@ -23,8 +26,7 @@ settings = (function() {
 			}
 		});
 	};
-	var _init = function(params) {
-		_contextPath = params.contextPath;
+	var _pluginInit = function() {
 		// iCheck init
 		$('.panel-group input:checkbox').iCheck({
 			checkboxClass : 'icheckbox_minimal-blue',
@@ -33,6 +35,8 @@ settings = (function() {
 		});
 		// bootstrapSwitch
 		$("[name='my-switch-checkbox']").bootstrapSwitch();
+	};
+	var _listOption = function() {
 		// tablist change
 		$("#headerType label").on("click", function() {
 			var index = $(this).index();
@@ -42,46 +46,56 @@ settings = (function() {
 		$(".panel-title a").on("click", function() {
 			$(this).find(".glyphicon").toggleClass("glyphicon-chevron-down");
 		});
-		// checkbox
-		/*$('input[name="my-select-checkbox"]').on('ifChecked', function(event){
-			console.log($(this).attr("content"));
-		  	console.log($(this).attr("kind"));
-		  	console.log("add");
-		});
-		
-		$('input[name="my-select-checkbox"]').on('ifUnchecked', function(event){
-			console.log($(this).attr("content"));
-			console.log($(this).attr("kind"));
-			console.log("del");
-		});*/
+		// select all
 		$(".panel .panel-title input").on("ifChecked", function() {
 			$(this).parentsUntil(".panel").parent().find(".list-group-item input").iCheck('check');
 		});
+		// cancle all
 		$(".panel .panel-title input").on("ifUnchecked", function() {
 			$(this).parentsUntil(".panel").parent().find(".list-group-item input").iCheck('uncheck');
 		});
+	};
+	var _listSubmitServer = function() {
 		$("#submitBtn").on("click", function() {
 			_submitList();
 			if (_replyList.add.length == 0 && _replyList.del.length == 0) {
 				$.alertW("未做任何更改哟~");
 				return;
 			}
-			// TODO 提交后刷新页面 不然再次提交会有数据错误
 			// 以前，一直以为在SpringMVC环境中，@RequestBody接收的是一个Json对象，一直在调试代码都没有成功，后来发现，其实 @RequestBody接收的是一个Json对象的字符串，而不是一个Json对象。然而在ajax请求往往传的都是Json对象，后来发现用 JSON.stringify(data)的方式就能将对象变成字符串。同时ajax请求的时候也要指定dataType: "json",contentType:"application/json" 这样就可以轻易的将一个对象或者List传到Java端
 			var source = {
 					url: "submitList",
 					data: _replyList
 				}
 			$.callServiceAsJson(source, {
-				success: function(data) {
-					$.alert("success");
-					console.log(data);
+				success: function(response) {
+					// {"success":true,"code":0,"data":{"info":"设置成功"}}
+					if (response.code == 0) {
+						$("#submitBtn").off("click");
+						$("#submitBtn").prop("disabled", true);
+						$.alert(response.data.info, function() {
+							// 提交后刷新页面 不然再次提交会有数据错误
+							location.reload();
+						});
+
+					} else if (response.code == -1) {
+						$.alertE(response.data.error);
+					}
 				}
 			});
 		});
 	};
+	var _init = function(params) {
+		// 上下文设置
+		_contextPath = params.contextPath;
+		// 第三方插件初始化
+		_pluginInit();
+		// 联系人列表相关UI操作
+		_listOption();
+		// 提交联系人更改
+		_listSubmitServer();
+	};
 	return {
-			init: _init,
-			submitList: _submitList
+			init: _init
 		};
 })();

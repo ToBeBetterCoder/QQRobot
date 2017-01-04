@@ -146,6 +146,8 @@ public class RobotServiceImpl implements RobotService {
 			} else {
 				processData.setGetCode(false);
 			}
+		} else {
+			processData.setGetCode(false);
 		}
 	}
 
@@ -201,10 +203,16 @@ public class RobotServiceImpl implements RobotService {
 			} else {
 				processData.setGetCode(false);
 			}
+		} else {
+			processData.setGetCode(false);
 		}
 	}
 
 	private void setAutoReply(ProcessData processData) throws Exception {
+		if (0 == robotDao.hasAutoReply(processData.getSelfUiu())) {
+			AutoReply autoReply = new AutoReply(processData.getSelfUiu());
+			robotDao.initAutoReply(autoReply.getAccount(), autoReply.getIsAutoReply() ? 1 : 0, autoReply.getIsSpecial() ? 1 : 0);
+		}
 		processData.setAutoReply(robotDao.queryAutoReplyNames(processData.getSelfUiu()));
 	}
 

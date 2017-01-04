@@ -26,6 +26,10 @@ public interface RobotDao {
 
 	void disableReplyNameList(@Param("list") List<Map<String, Object>> list, @Param("selfUiu") String selfUiu) throws Exception;
 
+	int hasAutoReply(String selfUiu) throws Exception;
+	
+	void initAutoReply(@Param("selfUiu") String selfUiu, @Param("isAutoReply") int isAutoReply, @Param("isSpecial") int isSpecial) throws Exception;
+	
 	void updateIsAutoReply(int autoReplyfalg, String selfUiu) throws Exception;
 
 	void updateIsSpecial(int specialfalg, String selfUiu) throws Exception;

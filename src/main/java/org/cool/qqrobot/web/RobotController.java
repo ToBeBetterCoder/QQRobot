@@ -92,9 +92,9 @@ public class RobotController {
 			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
 		}
 		try {
+			robotService.updateReplyNameList(paramMap, processDataSession);
 			Map<String, Object> responseMap = new HashMap<String, Object>();
 			responseMap.put("info", RobotCodeEnums.LIST_SUBMIT_SUCCESS.getCodeInfo());
-			robotService.updateReplyNameList(paramMap, processDataSession);
 			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.LIST_SUBMIT_SUCCESS.getCode(), responseMap);
 		} catch (RobotException e) {
 			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.LIST_SUBMIT_FAIL.getCode(), RobotCodeEnums.LIST_SUBMIT_FAIL.getCodeInfo());

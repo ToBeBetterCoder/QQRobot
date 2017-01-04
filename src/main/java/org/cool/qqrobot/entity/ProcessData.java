@@ -157,7 +157,7 @@ public class ProcessData {
 				for (Map<String, Object> map : marknamesList) {
 					if (replyName.getMarkName().equals(MapUtils.getString(map, Const.MARK_NAME))) {
 						replyName.setUin(new DecimalFormat("#").format(MapUtils.getObject(map, Const.UIN)));
-						return;
+						break;
 					}
 				}
 				// marknames找不到再去info找
@@ -166,7 +166,7 @@ public class ProcessData {
 					for (Map<String, Object> map : infoList) {
 						if (replyName.getMarkName().equals(MapUtils.getString(map, Const.NICK))) {
 							replyName.setUin(new DecimalFormat("#").format(MapUtils.getObject(map, Const.UIN)));
-							return;
+							break;
 						}
 					}
 				}

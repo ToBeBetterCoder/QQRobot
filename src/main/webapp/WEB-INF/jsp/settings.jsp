@@ -33,7 +33,7 @@
 					</ul>
 					
 					<!-- 联系人 群组 -->
-					<div id="headerType" class="btn-group btn-group-justified" data-toggle="buttons">
+					<div id="headerType" class="btn-group btn-group-justified ${empty autoReply ? "" : (autoReply.isSpecial ? "" : "not-show")}" data-toggle="buttons">
 						<label class="btn btn-no-border btn-info btn-no-radius active">
 							<input type="radio" name="options" checked> 联系人
 						</label>
@@ -48,7 +48,7 @@
 		<div class="container">
 			<div class="row">
 				<!-- 好友列表 -->
-				<div id="friendsList">
+				<div id="friendsList" class="${empty autoReply ? "" : (autoReply.isSpecial ? "" : "not-show")}">
 					<!-- 联系人 -->
 					<div class="panel-group" role="tablist" aria-multiselectable="true">
 						<c:forEach var="friendsGroup" items="${friendsViewMap.result}">

@@ -10,30 +10,39 @@
 	
 	$.extend({
 		// 提示级别
-		alert: function(info) {
+		alert: function(info, callback) {
 			$(tipsHtml).appendTo(parentDom)
 				.addClass("success")
 				.html(info)
 				.fadeToggle(speedTime, function () {
 					$("." + tipsClass + ":hidden").remove();
+					if ($.isFunction(callback)) {
+						callback();
+					}
 				});
 		},
 		// 警告级别
-		alertW: function(info) {
+		alertW: function(info, callback) {
 			$(tipsHtml).appendTo(parentDom)
 			.addClass("warning")
 			.html(info)
 			.fadeToggle(speedTime, function () {
 				$("." + tipsClass + ":hidden").remove();
+				if ($.isFunction(callback)) {
+					callback();
+				}
 			});
 		},
 		// 错误级别
-		alertE: function(info) {
+		alertE: function(info, callback) {
 			$(tipsHtml).appendTo(parentDom)
 			.addClass("error")
 			.html(info)
 			.fadeToggle(speedTime, function () {
 				$("." + tipsClass + ":hidden").remove();
+				if ($.isFunction(callback)) {
+					callback();
+				}
 			});
 		}
 	});

@@ -36,6 +36,11 @@
 		$.ajax(reqOptions).done(
 			function (data, textStatus, jqXHR) {
 			    // data 可能是 xmlDoc, jsonObj, html, text, 等等...
+				if (data.success && data.code == 1) {
+					$.alertW(data.error, function () {
+						location.reload();
+					});
+				}
 				if (callback && $.isFunction(callback.success)) {
 			    	callback.success(data);
 			    } else {

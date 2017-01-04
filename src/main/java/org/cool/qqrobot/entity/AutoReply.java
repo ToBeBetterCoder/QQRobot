@@ -10,14 +10,21 @@ public class AutoReply {
 	// QQ号
 	private String account;
 	// 是否允许自动回复 1：true （得选择包装类型，不然页面获取不到属性）
-	private Boolean isAutoReply = false;
+	private Boolean isAutoReply = true;
 	private Date createTime;
 	private Date updateTime;
 	// 是否自定义回复列表
 	private Boolean isSpecial = false;
 	// 自动回复好友/群/讨论组列表（一对多）
 	private List<ReplyName> replyNameList = new ArrayList<ReplyName>();
-	
+	// Tips mybatis映射实体类必须有有个无参构造方法，不然反射不能构造对象，mybatis会报错：No constructor found in org.cool.qqrobot.entity.AutoReply...
+	public AutoReply() {
+		super();
+	}
+	public AutoReply(String account) {
+		super();
+		this.account = account;
+	}
 	public Integer getId() {
 		return id;
 	}

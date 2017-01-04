@@ -9,6 +9,15 @@
 		INSERT INTO `robot_user_info` (account, gender, nick, lnick, detail)
 		VALUES (#{account}, #{gender}, #{nick}, #{lnick}, #{detail});
 	</insert>
+	<!-- 检查是否存在记录 -->
+	<select id="hasAutoReply" resultType="int">
+		SELECT COUNT(account) FROM `robot_auto_reply` WHERE account = #{selfUiu}
+	</select>
+	<!-- 插入自动回复（首次登录时插入） -->
+	<insert id="initAutoReply">
+		INSERT INTO `robot_auto_reply` (account, is_auto_reply, is_special)
+		VALUES (#{selfUiu}, #{isAutoReply}, #{isSpecial});
+	</insert>
 	<!-- 插入或更新自定义回复的名单 -->
 	<insert id="insertOrUpdateReplyNameList">
 		INSERT INTO `robot_auto_reply_list` (pid, mark_name, type, state)
@@ -39,7 +48,7 @@
 		UPDATE `robot_auto_reply` SET is_special = ${} WHERE account = ${};
 	</update> -->
 	<!-- 获取回复列表 （resultMap引用不能漏） -->
-	<select id="queryAutoReplyNames" resultType="AutoReply" resultMap="queryAutoReply">
+	<select id="queryAutoReplyNames" resultMap="queryAutoReply">
 		SELECT
 			reply.id,
 			reply.account,
