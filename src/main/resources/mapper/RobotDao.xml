@@ -40,13 +40,13 @@
     	</foreach>
 	</update>
 	<!-- 是否自动回复 -->
-	<!-- <update id="">
-		UPDATE `robot_auto_reply` SET is_auto_reply = ${} WHERE account = ${};
-	</update> -->
+	<update id="updateIsAutoReply">
+		UPDATE `robot_auto_reply` SET is_auto_reply = ${autoReplyfalg} WHERE account = ${selfUiu};
+	</update>
 	<!-- 是否自定义回复 -->
-	<!-- <update id="">
-		UPDATE `robot_auto_reply` SET is_special = ${} WHERE account = ${};
-	</update> -->
+	<update id="updateIsSpecial">
+		UPDATE `robot_auto_reply` SET is_special = ${specialfalg} WHERE account = ${selfUiu};
+	</update>
 	<!-- 获取回复列表 （resultMap引用不能漏） -->
 	<select id="queryAutoReplyNames" resultMap="queryAutoReply">
 		SELECT

@@ -142,25 +142,6 @@
 						contextPath: contextPath
 					};
 				settings.init(params);
-				// list show
-				$('#replyAll').on('switchChange.bootstrapSwitch', function(event, state) {
-					if (state) {
-						$.alert("全部回复已开启");
-						$("#friendsList, #headerType").slideUp("fast");
-					} else {
-						$.alert("请自定义回复");
-						$("#friendsList, #headerType").slideDown("fast");
-					}
-				});
-				
-				$('#autoReply').on('switchChange.bootstrapSwitch', function(event, state) {
-					if (state) {
-						$.alert("自动回复已开启");
-					} else {
-						$.alert("自动回复已关闭");
-					}
-				});
-				
 			});
 
 			/* 

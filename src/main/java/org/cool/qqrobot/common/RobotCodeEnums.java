@@ -17,8 +17,8 @@ public enum RobotCodeEnums {
 	DATA_FORMATE_ERROR(40007, "数据格式异常"),
 	DEFAULT_ERROR(-1, "无法识别异常编码"),
 	
-	LIST_SUBMIT_SUCCESS(0, "设置成功"),
-	LIST_SUBMIT_FAIL(-1, "设置失败"),
+	REQUEST_SUCCESS(0, "设置成功"),
+	REQUEST_FAIL(-1, "设置失败"),
 	SESSION_EXPIRED(1, "会话过期，请重新登录~");
 	private RobotCodeEnums(int code, String codeInfo) {
 		this.code = code;

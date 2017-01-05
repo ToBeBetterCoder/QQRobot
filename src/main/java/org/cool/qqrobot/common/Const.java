@@ -175,5 +175,10 @@ public class Const {
 	public static final String Y = "Y";
 	public static final String ADD_KEY = "add";
 	public static final String DEL_KEY = "del";
+	public static final String AUTO_REPLY = "autoReply";
+	public static final String REPLY_ALL = "replyAll";
+	public static final String ON = "on";
+	public static final String OFF = "off";
+	public static final Object TYPE = "type";
 	
 }

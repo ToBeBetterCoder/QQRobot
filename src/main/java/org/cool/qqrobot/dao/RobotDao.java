@@ -30,9 +30,9 @@ public interface RobotDao {
 	
 	void initAutoReply(@Param("selfUiu") String selfUiu, @Param("isAutoReply") int isAutoReply, @Param("isSpecial") int isSpecial) throws Exception;
 	
-	void updateIsAutoReply(int autoReplyfalg, String selfUiu) throws Exception;
+	void updateIsAutoReply(@Param("autoReplyfalg") int autoReplyfalg, @Param("selfUiu") String selfUiu) throws Exception;
 
-	void updateIsSpecial(int specialfalg, String selfUiu) throws Exception;
+	void updateIsSpecial(@Param("specialfalg") int specialfalg, @Param("selfUiu") String selfUiu) throws Exception;
 
 	
 }

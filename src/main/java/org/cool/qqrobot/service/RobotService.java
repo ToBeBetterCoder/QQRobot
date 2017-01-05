@@ -46,18 +46,18 @@ public interface RobotService {
 	void updateReplyNameList(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException;
 	/**
 	 * 更新是否自动回复
-	 * @param autoReplyfalg
+	 * @param paramMap
 	 * @param processDataSession
 	 * @return
 	 */
-	boolean updateIsAutoReply(int autoReplyfalg, ProcessData processDataSession);
+	void updateIsAutoReply(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException;
 	/**
 	 * 更新是否自定义回复
-	 * @param specialfalg
+	 * @param paramMap
 	 * @param processDataSession
 	 * @return
 	 */
-	boolean updateIsSpecial(int specialfalg, ProcessData processDataSession);
+	void updateIsSpecial(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException;
 	/**
 	 * 传递session
 	 * @param session

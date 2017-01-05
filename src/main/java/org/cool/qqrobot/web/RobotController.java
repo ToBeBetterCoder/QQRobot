@@ -94,11 +94,43 @@ public class RobotController {
 		try {
 			robotService.updateReplyNameList(paramMap, processDataSession);
 			Map<String, Object> responseMap = new HashMap<String, Object>();
-			responseMap.put("info", RobotCodeEnums.LIST_SUBMIT_SUCCESS.getCodeInfo());
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.LIST_SUBMIT_SUCCESS.getCode(), responseMap);
+			responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
 		} catch (RobotException e) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.LIST_SUBMIT_FAIL.getCode(), RobotCodeEnums.LIST_SUBMIT_FAIL.getCodeInfo());
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
 		}
 		
+	}
+	@RequestMapping(value="/setAutoReply", method = RequestMethod.POST)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> setAutoReply(@RequestBody Map<String, Object> paramMap, HttpSession session) {
+		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
+		if (null == processDataSession) {
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
+		}
+		try {
+			robotService.updateIsAutoReply(paramMap, processDataSession);
+			Map<String, Object> responseMap = new HashMap<String, Object>();
+			responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+		} catch (RobotException e) {
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
+		}
+	}
+	@RequestMapping(value="/setReplyAll", method = RequestMethod.POST)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> setReplyAll(@RequestBody Map<String, Object> paramMap, HttpSession session) {
+		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
+		if (null == processDataSession) {
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
+		}
+		try {
+			robotService.updateIsSpecial(paramMap, processDataSession);
+			Map<String, Object> responseMap = new HashMap<String, Object>();
+			responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+		} catch (RobotException e) {
+			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
+		}
 	}
 }

@@ -66,7 +66,7 @@ settings = (function() {
 			var source = {
 					url: "submitList",
 					data: _replyList
-				}
+				};
 			$.callServiceAsJson(source, {
 				success: function(response) {
 					// {"success":true,"code":0,"data":{"info":"设置成功"}}
@@ -77,12 +77,51 @@ settings = (function() {
 							// 提交后刷新页面 不然再次提交会有数据错误
 							location.reload();
 						});
-
 					} else if (response.code == -1) {
-						$.alertE(response.data.error);
+						$.alertE(response.error);
 					}
 				}
 			});
+		});
+	};
+	var _replyAllServer = function(flag) {
+		var source = {
+				url: "setReplyAll",
+				data: {replyAll: flag ? "off" : "on"}
+			};
+		$.callServiceAsJson(source, {
+			success: function(response) {
+				if (response.code == 0) {
+					flag ? $.alert(response.data.info) : $.alert("请自定义回复列表");
+					var listDom = $("#friendsList, #headerType");
+					flag ? listDom.slideUp("fast") : listDom.slideDown("fast");
+				} else if (response.code == -1) {
+					$.alertE(response.error);
+				}
+			}
+		});
+	};
+	var _autoReplyServer = function(flag) {
+		var source = {
+				url: "setAutoReply",
+				data: {autoReply: flag ? "on" : "off"}
+			};
+		$.callServiceAsJson(source, {
+			success: function(response) {
+				if (response.code == 0) {
+					$.alert(response.data.info);
+				} else if (response.code == -1) {
+					$.alertE(response.error);
+				}
+			}
+		});
+	};
+	var _replySet = function() {
+		$('#replyAll').on('switchChange.bootstrapSwitch', function(event, state) {
+			_replyAllServer(state);
+		});
+		$('#autoReply').on('switchChange.bootstrapSwitch', function(event, state) {
+			_autoReplyServer(state);
 		});
 	};
 	var _init = function(params) {
@@ -92,8 +131,11 @@ settings = (function() {
 		_pluginInit();
 		// 联系人列表相关UI操作
 		_listOption();
+		// 自动回复、全部回复开关
+		_replySet();
 		// 提交联系人更改
 		_listSubmitServer();
+		
 	};
 	return {
 			init: _init

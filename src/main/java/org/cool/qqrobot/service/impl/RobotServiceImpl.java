@@ -757,11 +757,13 @@ public class RobotServiceImpl implements RobotService {
 		try {
 			// 插入新数据，如果存在则更新为启用
 			List<Map<String, Object>> addList = (ArrayList<Map<String, Object>>) MapUtils.getObject(paramMap, Const.ADD_KEY, new ArrayList<Map<String, Object>>());
+			// 更新数据库，禁用回复名单
+			List<Map<String, Object>> delList = (ArrayList<Map<String, Object>>) MapUtils.getObject(paramMap, Const.DEL_KEY, new ArrayList<Map<String, Object>>());
+			// 入参校验
+			updateReplyNameListParamsCheck(processDataSession, addList, delList);
 			if (!addList.isEmpty()) {
 				robotDao.insertOrUpdateReplyNameList(addList, processDataSession.getSelfUiu());
 			}
-			// 更新数据库，禁用回复名单
-			List<Map<String, Object>> delList = (ArrayList<Map<String, Object>>) MapUtils.getObject(paramMap, Const.DEL_KEY, new ArrayList<Map<String, Object>>());
 			if (!delList.isEmpty()) {
 				robotDao.disableReplyNameList(delList, processDataSession.getSelfUiu());
 			}
@@ -772,8 +774,37 @@ public class RobotServiceImpl implements RobotService {
 		} catch (Exception e) {
 			logger.error("设置自定义回复名单异常", e);
 			// 所有编译期异常转化为运行期异常，便于事务回滚
-			throw new RobotException(e.getMessage(), e);
+			throw new RobotException(e);
 		}
+	}
+
+	private void updateReplyNameListParamsCheck(ProcessData processDataSession, List<Map<String, Object>> addList,
+			List<Map<String, Object>> delList) {
+		if (addList.isEmpty() && delList.isEmpty()) {
+			throwIllegalParamsException(processDataSession);
+		}
+		for (Map<String, Object> map : addList) {
+			paramsMapCheck(processDataSession, map);
+		}
+		for (Map<String, Object> map : delList) {
+			paramsMapCheck(processDataSession, map);
+		}
+	}
+
+	private void paramsMapCheck(ProcessData processDataSession, Map<String, Object> map) {
+		if (!map.containsKey(Const.NAME) || !map.containsKey(Const.TYPE)) {
+			throwIllegalParamsException(processDataSession);
+		} else {
+			int type = MapUtils.getByteValue(map, Const.TYPE);
+			if (!(type == Const.PERSON || type == Const.DISCU || type == Const.GROUP)) {
+				throwIllegalParamsException(processDataSession);
+			}
+		}
+	}
+
+	private void throwIllegalParamsException(ProcessData processDataSession) {
+		logger.error("提交非法入参，用户QQ号：{}", processDataSession.getSelfUiu());;
+		throw new RobotException("非法入参");
 	}
 
 	private void contactsListViewExpired(ProcessData processDataSession) {
@@ -789,27 +820,41 @@ public class RobotServiceImpl implements RobotService {
 	}
 
 	@Override
-	public boolean updateIsAutoReply(int autoReplyfalg, ProcessData processDataSession) {
+	public void updateIsAutoReply(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException {
+		int autoReplyfalg = 1;
+		if (Const.ON.equals(MapUtils.getString(paramMap, Const.AUTO_REPLY))) {
+			autoReplyfalg = 1;
+		} else if (Const.OFF.equals(MapUtils.getString(paramMap, Const.AUTO_REPLY))) {
+			autoReplyfalg = 0;
+		} else {
+			throwIllegalParamsException(processDataSession);
+		}
 		try {
 			robotDao.updateIsAutoReply(autoReplyfalg, processDataSession.getSelfUiu());
+			processDataSession.getAutoReply().setIsAutoReply(autoReplyfalg == 1 ? true : false);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("设置自动回复异常", e);
+			throw new RobotException(e);
 		}
-		processDataSession.getAutoReply().setIsAutoReply(null);
-		return false;
 	}
 
 	@Override
-	public boolean updateIsSpecial(int specialfalg, ProcessData processDataSession) {
+	public void updateIsSpecial(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException{
+		int specialfalg = 0;
+		if (Const.ON.equals(MapUtils.getString(paramMap, Const.REPLY_ALL))) {
+			specialfalg = 1;
+		} else if (Const.OFF.equals(MapUtils.getString(paramMap, Const.REPLY_ALL))) {
+			specialfalg = 0;
+		} else {
+			throwIllegalParamsException(processDataSession);
+		}
 		try {
 			robotDao.updateIsSpecial(specialfalg, processDataSession.getSelfUiu());
+			processDataSession.getAutoReply().setIsSpecial(specialfalg == 1 ? true : false);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			logger.error("设置自定义回复异常", e);
+			throw new RobotException(e);
 		}
-		processDataSession.getAutoReply().setIsSpecial(null);
-		return false;
 	}
 
 	@Override
