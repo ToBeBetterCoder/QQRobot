@@ -30,7 +30,7 @@ public class RobotDaoTest {
 	}
 	
 	@Test
-	public void queryAutoReplyNamesTest() {
+	public void queryAutoReplyNamesTest() throws Exception {
 		AutoReply autoReplyNamesSet = robotDao.queryAutoReplyNames("815181993");
 		System.out.println(autoReplyNamesSet);
 	}

@@ -34,5 +34,7 @@ public interface RobotDao {
 
 	void updateIsSpecial(@Param("specialfalg") int specialfalg, @Param("selfUiu") String selfUiu) throws Exception;
 
+	void updateQuitTime(Integer id) throws Exception;
+
 	
 }

@@ -93,7 +93,7 @@ settings = (function() {
 			success: function(response) {
 				if (response.code == 0) {
 					flag ? $.alert(response.data.info) : $.alert("请自定义回复列表");
-					var listDom = $("#friendsList, #headerType");
+					var listDom = $("#friendsList, #headerType, #submitBtn");
 					flag ? listDom.slideUp("fast") : listDom.slideDown("fast");
 				} else if (response.code == -1) {
 					$.alertE(response.error);
@@ -124,6 +124,28 @@ settings = (function() {
 			_autoReplyServer(state);
 		});
 	};
+	var _robotQuit = function() {
+		$("#robotQuit").on("click", function() {
+			var source = {
+					url: "robotQuit"
+				};
+			$.callServiceAsJsonGet(source, {
+				success: function(response) {
+					if (response.code == 0) {
+						$("#robotQuit").off("click");
+						$("#robotQuit").prop("disabled", true);
+						$("#loading").hide();
+						$("#contentBody").hide();
+						$("#reLogin").show();
+//						$.alert(response.data.info);
+					} else if (response.code == -1) {
+						$.alertE(response.error);
+					}
+				}
+			});
+		});
+	};
+	
 	var _init = function(params) {
 		// 上下文设置
 		_contextPath = params.contextPath;
@@ -135,7 +157,11 @@ settings = (function() {
 		_replySet();
 		// 提交联系人更改
 		_listSubmitServer();
-		
+		// 退出
+		_robotQuit();
+		// 页面加载显示
+		$("#loading").hide();
+		$("#contentBody").show();
 	};
 	return {
 			init: _init

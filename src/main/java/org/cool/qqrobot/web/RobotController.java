@@ -5,13 +5,12 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.MapUtils;
+import org.cool.qqrobot.common.CacheMap;
 import org.cool.qqrobot.common.Const;
 import org.cool.qqrobot.common.RobotCodeEnums;
 import org.cool.qqrobot.dto.RobotResult;
 import org.cool.qqrobot.entity.AutoReply;
-import org.cool.qqrobot.entity.MyHttpResponse;
 import org.cool.qqrobot.entity.ProcessData;
 import org.cool.qqrobot.exception.RobotException;
 import org.cool.qqrobot.service.RobotService;
@@ -42,7 +41,7 @@ public class RobotController {
 	public String getCodeToLogin(HttpSession session, Model model) {
 		// 通过session判断 防止同一用户多次刷新获取二维码
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
-		if (null != processDataSession && processDataSession.isLogin()) {
+		if (null != processDataSession && CacheMap.isOnline(processDataSession)) {
 			// 登陆后可以设置是否自动回复，是否自定义回复名单
 			AutoReply autoReply = processDataSession.getAutoReply();
 			Map<String, Object> friendsViewMap = processDataSession.getFriendsViewMap();
@@ -62,26 +61,29 @@ public class RobotController {
 			model.addAttribute("discussesViewMap", discussesViewMap);
 			model.addAttribute("groupsViewMap", groupsViewMap);
 			return "settings";
-		} if (null != processDataSession && processDataSession.isGetCode()) {
+		} if (null != processDataSession && CacheMap.hasGetCode(processDataSession)) {
 			// 防止刷新重复获取二维码
 			model.addAttribute("imageCode", processDataSession.getImageCode());
 			return "login";
 		} else {
 			ProcessData processData = new ProcessData();
 			session.setAttribute(Const.PROCESS_DATA, processData);
-			robotService.sessionSetter(session);
-			MyHttpResponse getCodeResponse = robotService.getCode(processData);
-			String imageCode = null;
-			if (MyHttpResponse.S_OK == getCodeResponse.getStatus()) {
-				imageCode = "data:" + getCodeResponse.getContentType() + ";base64," 
-						+ Base64.encodeBase64String(getCodeResponse.getImageCode());
-				model.addAttribute("imageCode", imageCode);
-				processData.setImageCode(imageCode);
-				// 设置二维码获取成功标识
-				processData.setGetCode(true);
-			}
+//			robotService.sessionSetter(session);
+			String imageCode = robotService.getCode(processData);
+			model.addAttribute("imageCode", imageCode);
+			// TODO 二维码获取失败，页面要提示
 			return "login";
 		}
+	}
+	
+	private RobotResult<Map<String, Object>> successResult() {
+		Map<String, Object> responseMap = new HashMap<String, Object>();
+		responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
+		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+	}
+	
+	private RobotResult<Map<String, Object>> exceptionResult() {
+		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
 	}
 	
 	@RequestMapping(value="/submitList", method = RequestMethod.POST)
@@ -93,11 +95,9 @@ public class RobotController {
 		}
 		try {
 			robotService.updateReplyNameList(paramMap, processDataSession);
-			Map<String, Object> responseMap = new HashMap<String, Object>();
-			responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+			return successResult();
 		} catch (RobotException e) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
+			return exceptionResult();
 		}
 		
 	}
@@ -110,13 +110,12 @@ public class RobotController {
 		}
 		try {
 			robotService.updateIsAutoReply(paramMap, processDataSession);
-			Map<String, Object> responseMap = new HashMap<String, Object>();
-			responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+			return successResult();
 		} catch (RobotException e) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
+			return exceptionResult();
 		}
 	}
+
 	@RequestMapping(value="/setReplyAll", method = RequestMethod.POST)
 	@ResponseBody
 	public RobotResult<Map<String, Object>> setReplyAll(@RequestBody Map<String, Object> paramMap, HttpSession session) {
@@ -126,11 +125,22 @@ public class RobotController {
 		}
 		try {
 			robotService.updateIsSpecial(paramMap, processDataSession);
-			Map<String, Object> responseMap = new HashMap<String, Object>();
-			responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+			return successResult();
 		} catch (RobotException e) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
+			return exceptionResult();
+		}
+	}
+	
+	@RequestMapping(value="/robotQuit", method = RequestMethod.GET)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> quit(HttpSession session) {
+		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
+		try {
+			robotService.quit(processDataSession);
+			processDataSession = null;
+			return successResult();
+		} catch (RobotException e) {
+			return exceptionResult();
 		}
 	}
 }

@@ -17,6 +17,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.collections.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPost;
@@ -39,6 +40,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 public class RobotServiceImpl implements RobotService {
@@ -50,7 +53,8 @@ public class RobotServiceImpl implements RobotService {
 	@Autowired
 	private RedisDao redisDao;
 	@Override
-	public MyHttpResponse getCode(ProcessData processData) {
+	public String getCode(ProcessData processData) {
+		String imageCode = null;
 		MyHttpRequest codeRequest = new MyHttpRequest();
 		codeRequest.setUrl("https://ssl.ptlogin2.qq.com/ptqrshow?appid=501004106&e=0&l=M&s=5&d=72&v=4&t=" + Math.random());
 		MyHttpResponse codeResponse = new MyHttpResponse();
@@ -60,11 +64,14 @@ public class RobotServiceImpl implements RobotService {
 			logger.error("二维码获取异常", e);
 		}
 		if (MyHttpResponse.S_OK == codeResponse.getStatus()) {
+			imageCode = "data:" + codeResponse.getContentType() + ";base64," 
+					+ Base64.encodeBase64String(codeResponse.getImageCode());
+			processData.setImageCode(imageCode);
+			// 设置二维码获取成功标识
+			processData.setGetCode(true);
 			loginCheck(processData);
-		} else {
-			processData.setGetCode(false);
 		}
-		return codeResponse;
+		return imageCode;
 	}
 	
 	private void loginCheck(ProcessData processData) {
@@ -197,8 +204,8 @@ public class RobotServiceImpl implements RobotService {
 					}
 					
 				} else {
-					// session过期，但用户其实还在线，未退出，这时重复登陆时，更新session中的processData
-					this.session.setAttribute(Const.PROCESS_DATA, dataFromCache);
+					sessionSetter();
+					session.setAttribute(Const.PROCESS_DATA, dataFromCache);
 				}
 			} else {
 				processData.setGetCode(false);
@@ -230,7 +237,7 @@ public class RobotServiceImpl implements RobotService {
 	}
 
 	private void pollMessageThread(ProcessData processData) {
-		// TODO 把每一个轮询线程对象保存到map中，便于终止轮询（key:qq号，value:Future对象），同时清除登录成功的缓存信息
+		// 把每一个轮询线程对象保存到map中，便于终止轮询（key:qq号，value:Future对象），同时清除登录成功的缓存信息，更新退出时间
 		Future<?> future = ThreadPool.getInstance().getScheduledThreadPool().scheduleAtFixedRate(new Runnable() {
 			@Override
 			public void run() {
@@ -272,9 +279,9 @@ public class RobotServiceImpl implements RobotService {
 					}
 				}
 			}
-
-			
 		}, Const.INIT_DELAY, Const.PERIOD, TimeUnit.MICROSECONDS);
+		// 保存当前线程future
+		CacheMap.threadFuturMap.put(processData.getSelfUiu(), future);
 	}
 	
 	private boolean autoReply(ProcessData processData, String fromUin) {
@@ -411,6 +418,8 @@ public class RobotServiceImpl implements RobotService {
 				processData.setGetCode(false);
 				logger.error("获取好友列表异常");
 			}
+		} else {
+			logger.error("获取好友列表异常");
 		}
 	}
 
@@ -433,6 +442,8 @@ public class RobotServiceImpl implements RobotService {
 				processData.setGetCode(false);
 				logger.error("获取群列表异常");
 			}
+		} else {
+			logger.error("获取群列表异常");
 		}
 	}
 
@@ -454,6 +465,8 @@ public class RobotServiceImpl implements RobotService {
 				processData.setGetCode(false);
 				logger.error("获取讨论组列表异常");
 			}
+		} else {
+			logger.error("获取讨论组列表异常");
 		}
 	}
 
@@ -473,7 +486,7 @@ public class RobotServiceImpl implements RobotService {
 				UserInfo userInfo = new UserInfo(selfInfoResponse.getJsonMap(), selfInfoResponse.getTextStr());
 				processData.setUserInfo(userInfo);
 				// 异步记录登录用户信息
-				// TODO 登录成功后，记录当前登录日志的id，当用户主动退出时，再次更新登出时间
+				// 登录成功后，记录当前登录日志的id，当用户主动退出时，再次更新登出时间
 				ThreadPool.getInstance().getFixedThreadPool().execute(new Runnable() {
 					
 					@Override
@@ -821,15 +834,15 @@ public class RobotServiceImpl implements RobotService {
 
 	@Override
 	public void updateIsAutoReply(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException {
-		int autoReplyfalg = 1;
-		if (Const.ON.equals(MapUtils.getString(paramMap, Const.AUTO_REPLY))) {
-			autoReplyfalg = 1;
-		} else if (Const.OFF.equals(MapUtils.getString(paramMap, Const.AUTO_REPLY))) {
-			autoReplyfalg = 0;
-		} else {
-			throwIllegalParamsException(processDataSession);
-		}
 		try {
+			int autoReplyfalg = 1;
+			if (Const.ON.equals(MapUtils.getString(paramMap, Const.AUTO_REPLY))) {
+				autoReplyfalg = 1;
+			} else if (Const.OFF.equals(MapUtils.getString(paramMap, Const.AUTO_REPLY))) {
+				autoReplyfalg = 0;
+			} else {
+				throwIllegalParamsException(processDataSession);
+			}
 			robotDao.updateIsAutoReply(autoReplyfalg, processDataSession.getSelfUiu());
 			processDataSession.getAutoReply().setIsAutoReply(autoReplyfalg == 1 ? true : false);
 		} catch (Exception e) {
@@ -840,15 +853,15 @@ public class RobotServiceImpl implements RobotService {
 
 	@Override
 	public void updateIsSpecial(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException{
-		int specialfalg = 0;
-		if (Const.ON.equals(MapUtils.getString(paramMap, Const.REPLY_ALL))) {
-			specialfalg = 1;
-		} else if (Const.OFF.equals(MapUtils.getString(paramMap, Const.REPLY_ALL))) {
-			specialfalg = 0;
-		} else {
-			throwIllegalParamsException(processDataSession);
-		}
 		try {
+			int specialfalg = 0;
+			if (Const.ON.equals(MapUtils.getString(paramMap, Const.REPLY_ALL))) {
+				specialfalg = 1;
+			} else if (Const.OFF.equals(MapUtils.getString(paramMap, Const.REPLY_ALL))) {
+				specialfalg = 0;
+			} else {
+				throwIllegalParamsException(processDataSession);
+			}
 			robotDao.updateIsSpecial(specialfalg, processDataSession.getSelfUiu());
 			processDataSession.getAutoReply().setIsSpecial(specialfalg == 1 ? true : false);
 		} catch (Exception e) {
@@ -858,7 +871,38 @@ public class RobotServiceImpl implements RobotService {
 	}
 
 	@Override
+	public void quit(ProcessData processDataSession) {
+		// 1.结束线程轮询
+		try {
+			Future<?> future = CacheMap.threadFuturMap.get(processDataSession.getSelfUiu());
+			if (null != future && !future.isDone()) {
+				future.cancel(true);
+			}
+		} catch (Exception e) {
+			logger.error("线程结束异常", e);
+			throw new RobotException(e);
+		}
+		// 2.过程数据引用清除
+		CacheMap.processDataMap.remove(processDataSession.getSelfUiu());
+		// 3.session引用清除
+		sessionSetter();
+		session.removeAttribute(Const.PROCESS_DATA);
+		// 4.记录退出更新时间
+		try {
+			robotDao.updateQuitTime(processDataSession.getUserInfo().getId());
+		} catch (Exception e) {
+			logger.error("更新退出时间异常", e);
+		}
+		// 5.清除引用
+		processDataSession = null;
+	}
+
+	private void sessionSetter() {
+		session = (((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest()).getSession();
+	}
+
+	/*@Override
 	public void sessionSetter(HttpSession session) {
 		this.session = session;
-	}
+	}*/
 }

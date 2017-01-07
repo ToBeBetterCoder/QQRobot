@@ -3,7 +3,7 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
 	<head>
-		<title>login</title>
+		<title>扫码登录</title>
 	    <%@include file="common/head.jsp"%>
 	</head>
   	<body>

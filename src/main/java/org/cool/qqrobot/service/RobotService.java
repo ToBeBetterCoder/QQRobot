@@ -4,7 +4,6 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import org.cool.qqrobot.entity.MyHttpResponse;
 import org.cool.qqrobot.entity.ProcessData;
 import org.cool.qqrobot.exception.RobotException;
 
@@ -14,7 +13,7 @@ public interface RobotService {
 	 * @param processData
 	 * @return
 	 */
-	MyHttpResponse getCode(ProcessData processData);
+	String getCode(ProcessData processData);
 
 	/**
 	 * 构建好友列表
@@ -59,8 +58,13 @@ public interface RobotService {
 	 */
 	void updateIsSpecial(Map<String, Object> paramMap, ProcessData processDataSession) throws RobotException;
 	/**
+	 * 退出QQ机器人托管
+	 * @param processDataSession
+	 */
+	void quit(ProcessData processDataSession) throws RobotException;
+	/**
 	 * 传递session
 	 * @param session
 	 */
-	void sessionSetter(HttpSession session);
+//	void sessionSetter(HttpSession session);
 }

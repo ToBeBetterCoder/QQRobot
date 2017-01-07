@@ -4,11 +4,14 @@
     "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="org.cool.qqrobot.dao.RobotDao">
 	<!-- 目的：为DAO接口方法提供sql语句配置 -->
-	<!-- keyProperty="id" 返回主键给对象属性id -->
+	<!-- keyProperty="id" 返回自增主键给对象属性id -->
 	<insert id="addLoginInfo" keyProperty="id">
 		INSERT INTO `robot_user_info` (account, gender, nick, lnick, detail)
 		VALUES (#{account}, #{gender}, #{nick}, #{lnick}, #{detail});
 	</insert>
+	<update id="updateQuitTime">
+		UPDATE `robot_user_info` SET quit_time = NOW() WHERE id = #{id};
+	</update>
 	<!-- 检查是否存在记录 -->
 	<select id="hasAutoReply" resultType="int">
 		SELECT COUNT(account) FROM `robot_auto_reply` WHERE account = #{selfUiu}

@@ -54,6 +54,8 @@ public class UserInfo {
 	private String detail;
 	// 创建时间
 	private Date createTime;
+	// 退出登录时间
+	private Date quitTime;
 	
 	public UserInfo(Map<String, Object> userInfoMap, String userInfoJson) {
 		super();
@@ -108,5 +110,11 @@ public class UserInfo {
 	}
 	public void setCreateTime(Date createTime) {
 		this.createTime = createTime;
+	}
+	public Date getQuitTime() {
+		return quitTime;
+	}
+	public void setQuitTime(Date quitTime) {
+		this.quitTime = quitTime;
 	}
 }
