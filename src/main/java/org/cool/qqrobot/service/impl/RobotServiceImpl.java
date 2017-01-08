@@ -900,9 +900,4 @@ public class RobotServiceImpl implements RobotService {
 	private void sessionSetter() {
 		session = (((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest()).getSession();
 	}
-
-	/*@Override
-	public void sessionSetter(HttpSession session) {
-		this.session = session;
-	}*/
 }

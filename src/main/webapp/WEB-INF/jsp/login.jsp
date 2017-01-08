@@ -4,16 +4,11 @@
 <html lang="zh-cn">
 	<head>
 		<title>扫码登录</title>
+		<meta http-equiv="refresh" content="5">
 	    <%@include file="common/head.jsp"%>
 	</head>
   	<body>
 	    <img src="${imageCode}"/>
-		${friendsViewMap}
-		<br />
-		${discussesViewMap}
-		<br />
-		${groupsViewMap}
-		<br />
 	    <%@include file="common/foot.jsp"%>
   	</body>
 </html>

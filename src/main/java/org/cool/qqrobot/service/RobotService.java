@@ -62,9 +62,4 @@ public interface RobotService {
 	 * @param processDataSession
 	 */
 	void quit(ProcessData processDataSession) throws RobotException;
-	/**
-	 * 传递session
-	 * @param session
-	 */
-//	void sessionSetter(HttpSession session);
 }

@@ -9,6 +9,7 @@ import org.apache.commons.collections.MapUtils;
 import org.cool.qqrobot.common.CacheMap;
 import org.cool.qqrobot.common.Const;
 import org.cool.qqrobot.common.RobotCodeEnums;
+import org.cool.qqrobot.core.DataEngine;
 import org.cool.qqrobot.dto.RobotResult;
 import org.cool.qqrobot.entity.AutoReply;
 import org.cool.qqrobot.entity.ProcessData;
@@ -64,11 +65,11 @@ public class RobotController {
 		} if (null != processDataSession && CacheMap.hasGetCode(processDataSession)) {
 			// 防止刷新重复获取二维码
 			model.addAttribute("imageCode", processDataSession.getImageCode());
+			// TODO 如果已经扫描授权，则不显示二维码，显示登录中（需要定义一个登录中状态）
 			return "login";
 		} else {
 			ProcessData processData = new ProcessData();
 			session.setAttribute(Const.PROCESS_DATA, processData);
-//			robotService.sessionSetter(session);
 			String imageCode = robotService.getCode(processData);
 			model.addAttribute("imageCode", imageCode);
 			// TODO 二维码获取失败，页面要提示

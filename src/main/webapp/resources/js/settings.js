@@ -125,7 +125,7 @@ settings = (function() {
 		});
 	};
 	var _robotQuit = function() {
-		$("#robotQuit").on("click", function() {
+		$("#robotQuitBtn").on("click", function() {
 			var source = {
 					url: "robotQuit"
 				};
@@ -137,7 +137,6 @@ settings = (function() {
 						$("#loading").hide();
 						$("#contentBody").hide();
 						$("#reLogin").show();
-//						$.alert(response.data.info);
 					} else if (response.code == -1) {
 						$.alertE(response.error);
 					}
@@ -145,7 +144,11 @@ settings = (function() {
 			});
 		});
 	};
-	
+	var _reLogin = function() {
+		$("#reLoginBtn").on("click", function() {
+			location.reload();
+		});
+	};
 	var _init = function(params) {
 		// 上下文设置
 		_contextPath = params.contextPath;
@@ -159,6 +162,8 @@ settings = (function() {
 		_listSubmitServer();
 		// 退出
 		_robotQuit();
+		// 重新登录
+		_reLogin();
 		// 页面加载显示
 		$("#loading").hide();
 		$("#contentBody").show();

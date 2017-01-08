@@ -5,10 +5,10 @@
 	<head>
 		<title>设置</title>
     	<%@include file="common/head.jsp"%>
-    	<link href="${pageContext.request.contextPath}/resources/css/blue.css" rel="stylesheet">
-		<link href="${pageContext.request.contextPath}/resources/css/bootstrap-switch.min.css" rel="stylesheet">
-		<link href="${pageContext.request.contextPath}/resources/css/common.css?2" rel="stylesheet">
-		<link href="${pageContext.request.contextPath}/resources/css/settings.css" rel="stylesheet">
+    	<link href="${pageContext.request.contextPath}/resources/css/blue.css?${resVer}" rel="stylesheet">
+		<link href="${pageContext.request.contextPath}/resources/css/bootstrap-switch.min.css?${resVer}" rel="stylesheet">
+		<link href="${pageContext.request.contextPath}/resources/css/common.css?${resVer}" rel="stylesheet">
+		<link href="${pageContext.request.contextPath}/resources/css/settings.css?${resVer}" rel="stylesheet">
   	</head>
   	<body>
   		<div id="loading" class="container">
@@ -22,7 +22,7 @@
 			<nav class="navbar navbar-fixed-top" role="navigation">
 			  	<div class="container">
 				  	<div class="row">
-				    	<button id="robotQuit" type="button" class="btn btn-danger btn-block btn-no-radius">退出登录</button>
+				    	<button id="robotQuitBtn" type="button" class="btn btn-danger btn-block btn-no-radius">退出登录</button>
 						<br />
 						<!-- 回复 -->
 						<ul class="list-group list-with-switch">
@@ -146,16 +146,16 @@
 		<div id="reLogin" class="container not-show">
 			<div class="row">
 				<div class="col-xs-12 text-center">
-					<button id="" type="button" class="btn btn-lg btn-default">重新登录</button>
+					<button id="reLoginBtn" type="button" class="btn btn-lg btn-default">重新登录</button>
 				</div>
 			</div>
 		</div>
     	<%@include file="common/foot.jsp"%>
-    	<script src="${pageContext.request.contextPath}/resources/js/icheck.js"></script>
-		<script src="${pageContext.request.contextPath}/resources/js/bootstrap-switch.min.js"></script>
-		<script src="${pageContext.request.contextPath}/resources/js/my-tips.js"></script>
-		<script src="${pageContext.request.contextPath}/resources/js/settings.js"></script>
-		<script src="${pageContext.request.contextPath}/resources/js/my-service.js"></script>
+    	<script src="${pageContext.request.contextPath}/resources/js/icheck.js?${resVer}"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/bootstrap-switch.min.js?${resVer}"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/my-tips.js?${resVer}"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/settings.js?${resVer}"></script>
+		<script src="${pageContext.request.contextPath}/resources/js/my-service.js?${resVer}"></script>
 		<script>
 			$(function() {
 				var contextPath = "${pageContext.request.contextPath}";

@@ -180,5 +180,7 @@ public class Const {
 	public static final String ON = "on";
 	public static final String OFF = "off";
 	public static final Object TYPE = "type";
+	public static final String RES_VERSION = "resVer";
+	public static final String DATE_Y_M_D_H_M_S = "yyyyMMddHHmmss";
 	
 }
