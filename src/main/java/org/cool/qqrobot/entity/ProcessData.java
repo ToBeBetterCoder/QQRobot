@@ -19,6 +19,8 @@ import org.cool.qqrobot.http.MyHttpClient;
 public class ProcessData {
 	// 成功登录前的二维码获取控制
 	private boolean isGetCode = false;
+	// 二维码是否已经扫描过
+	private boolean isCodeScanned = false;
 	private boolean isLogin = false;
 	private transient String imageCode;
 	private String ptwebqq;
@@ -45,6 +47,12 @@ public class ProcessData {
 	private Map<String, Object> groupsViewMap = new HashMap<String, Object>();
 	// 页面展示的讨论组列表
 	private Map<String, Object> discussesViewMap = new HashMap<String, Object>();
+	public boolean isCodeScanned() {
+		return isCodeScanned;
+	}
+	public void setCodeScanned(boolean isCodeScanned) {
+		this.isCodeScanned = isCodeScanned;
+	}
 	public boolean isGetCode() {
 		return isGetCode;
 	}

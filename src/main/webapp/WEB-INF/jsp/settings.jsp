@@ -3,17 +3,16 @@
 <!DOCTYPE html>
 <html lang="zh-cn">
 	<head>
-		<title>设置</title>
+		<title>QQ机器人</title>
     	<%@include file="common/head.jsp"%>
     	<link href="${pageContext.request.contextPath}/resources/css/blue.css?${resVer}" rel="stylesheet">
 		<link href="${pageContext.request.contextPath}/resources/css/bootstrap-switch.min.css?${resVer}" rel="stylesheet">
-		<link href="${pageContext.request.contextPath}/resources/css/common.css?${resVer}" rel="stylesheet">
 		<link href="${pageContext.request.contextPath}/resources/css/settings.css?${resVer}" rel="stylesheet">
   	</head>
   	<body>
   		<div id="loading" class="container">
 			<div class="row">
-				<div class="col-xs-12 text-center">
+				<div class="col-xs-12 text-center text-muted">
 					loading...
 				</div>
 			</div>
@@ -27,7 +26,7 @@
 						<!-- 回复 -->
 						<ul class="list-group list-with-switch">
 							<li class="list-group-item">
-							             机器人自动回复
+							             机器人回复
 							    <span class="badge">
 									<input id="autoReply" data-on-color="info" data-size="small" type="checkbox" name="my-switch-checkbox" ${empty autoReply ? "" : (autoReply.isAutoReply ? "checked" : "")}/>
 							    </span>
@@ -146,7 +145,9 @@
 		<div id="reLogin" class="container not-show">
 			<div class="row">
 				<div class="col-xs-12 text-center">
-					<button id="reLoginBtn" type="button" class="btn btn-lg btn-default">重新登录</button>
+					<button id="reLoginBtn" type="button" class="btn btn-lg btn-default btn-re-login">
+						<span class="glyphicon glyphicon-retweet"></span> 重新登录
+					</button>
 				</div>
 			</div>
 		</div>

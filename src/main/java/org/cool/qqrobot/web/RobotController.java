@@ -63,16 +63,16 @@ public class RobotController {
 			model.addAttribute("groupsViewMap", groupsViewMap);
 			return "settings";
 		} if (null != processDataSession && CacheMap.hasGetCode(processDataSession)) {
+			// 如果已经扫描授权，则显示登录中
+			model.addAttribute("isCodeScanned", processDataSession.isCodeScanned());
 			// 防止刷新重复获取二维码
 			model.addAttribute("imageCode", processDataSession.getImageCode());
-			// TODO 如果已经扫描授权，则不显示二维码，显示登录中（需要定义一个登录中状态）
 			return "login";
 		} else {
 			ProcessData processData = new ProcessData();
 			session.setAttribute(Const.PROCESS_DATA, processData);
 			String imageCode = robotService.getCode(processData);
 			model.addAttribute("imageCode", imageCode);
-			// TODO 二维码获取失败，页面要提示
 			return "login";
 		}
 	}

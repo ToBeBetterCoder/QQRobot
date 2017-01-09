@@ -182,5 +182,9 @@ public class Const {
 	public static final Object TYPE = "type";
 	public static final String RES_VERSION = "resVer";
 	public static final String DATE_Y_M_D_H_M_S = "yyyyMMddHHmmss";
+	/**
+	 * 二维码失效
+	 */
+	public static final Integer INVALID_CODE = 65;
 	
 }

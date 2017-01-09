@@ -115,6 +115,8 @@ public class RobotServiceImpl implements RobotService {
 	private boolean firstLogin(ProcessData processData, MyHttpResponse checkResponse) {
 		String[] checkResponseArr = checkResponse.getTextStr().split(",");
 		if (checkResponseArr[0].contains(Const.SUCCESS_CODE.toString())) {
+			// 二维码扫描成功
+			processData.setCodeScanned(true);
 			MyHttpRequest firstLoginRequest = new MyHttpRequest();
 			firstLoginRequest.setUrl(checkResponseArr[2].replaceAll("'", ""));
 			MyHttpResponse firstLoginResponse = new MyHttpResponse();
@@ -131,6 +133,10 @@ public class RobotServiceImpl implements RobotService {
 			} else {
 				processData.setGetCode(false);
 			}
+		} else if (checkResponseArr[0].contains(Const.INVALID_CODE.toString())) {
+			// 二维码已失效
+			processData.setGetCode(false);
+			return true;
 		}
 		return false;
 	}
