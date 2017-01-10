@@ -31,4 +31,8 @@
     <servlet-name>robot-dispatcher</servlet-name>
     <url-pattern>/</url-pattern>
   </servlet-mapping>
+  <!-- 欢迎页必须禁掉默认的，不然mvc:view-controller无效 -->
+  <welcome-file-list>
+	<welcome-file></welcome-file>
+  </welcome-file-list>
 </web-app>

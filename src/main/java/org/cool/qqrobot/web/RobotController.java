@@ -31,14 +31,14 @@ import org.springframework.web.bind.annotation.ResponseBody;
  *
  */
 @Controller
-@RequestMapping("/robot")
+//@RequestMapping("/robot")
 public class RobotController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
 	private RobotService robotService;
 	
-	@RequestMapping(value="/getCodeToLogin", method = RequestMethod.GET)
+	@RequestMapping(value="/fun", method = RequestMethod.GET)
 	public String getCodeToLogin(HttpSession session, Model model) {
 		// 通过session判断 防止同一用户多次刷新获取二维码
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
@@ -91,9 +91,6 @@ public class RobotController {
 	@ResponseBody
 	public RobotResult<Map<String, Object>> submitList(@RequestBody Map<String, Object> paramMap, HttpSession session) {
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
-		if (null == processDataSession) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
-		}
 		try {
 			robotService.updateReplyNameList(paramMap, processDataSession);
 			return successResult();
@@ -106,9 +103,6 @@ public class RobotController {
 	@ResponseBody
 	public RobotResult<Map<String, Object>> setAutoReply(@RequestBody Map<String, Object> paramMap, HttpSession session) {
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
-		if (null == processDataSession) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
-		}
 		try {
 			robotService.updateIsAutoReply(paramMap, processDataSession);
 			return successResult();
@@ -121,9 +115,6 @@ public class RobotController {
 	@ResponseBody
 	public RobotResult<Map<String, Object>> setReplyAll(@RequestBody Map<String, Object> paramMap, HttpSession session) {
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
-		if (null == processDataSession) {
-			return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo());
-		}
 		try {
 			robotService.updateIsSpecial(paramMap, processDataSession);
 			return successResult();

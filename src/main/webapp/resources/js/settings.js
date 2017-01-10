@@ -149,6 +149,10 @@ settings = (function() {
 			location.reload();
 		});
 	};
+	var _pageLoad = function() {
+		$("#loading").hide();
+		$("#contentBody").show();
+	};
 	var _init = function(params) {
 		// 上下文设置
 		_contextPath = params.contextPath;
@@ -165,8 +169,7 @@ settings = (function() {
 		// 重新登录
 		_reLogin();
 		// 页面加载显示
-		$("#loading").hide();
-		$("#contentBody").show();
+		_pageLoad();
 	};
 	return {
 			init: _init

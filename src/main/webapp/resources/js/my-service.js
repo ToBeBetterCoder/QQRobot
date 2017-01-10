@@ -35,7 +35,10 @@
 		var response;
 		$.ajax(reqOptions).done(
 			function (data, textStatus, jqXHR) {
-			    // session过期
+				if(typeof data == "string" && /^\{(.+:.+,*){1,}\}$/.test(data)) {
+					data = $.parseJSON(data);
+				}
+				// session过期
 				if (data.success && data.code == 1) {
 					$.alertW(data.error, function () {
 						location.reload();
