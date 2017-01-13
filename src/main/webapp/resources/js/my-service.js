@@ -53,8 +53,6 @@
 			}
 		).fail(
 			function (XMLHttpRequest, textStatus, errorThrown) {
-			    // 通常 textStatus 和 errorThrown 之中
-			    // 只有一个会包含信息
 				if (callback && $.isFunction(callback.error)) {
 			    	callback.error();
 			    }

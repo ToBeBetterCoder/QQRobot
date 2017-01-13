@@ -1,16 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-
 	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
 		<!-- encoder 默认配置为PatternLayoutEncoder -->
 		<encoder>
-			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
-			</pattern>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
 		</encoder>
 	</appender>
-
+	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+	 	<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+		    <!-- rollover daily -->
+		    <fileNamePattern>mylog-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+		    <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
+		    <maxFileSize>1MB</maxFileSize>    
+		    <maxHistory>5</maxHistory>
+		    <totalSizeCap>20MB</totalSizeCap>
+	  	</rollingPolicy>
+		<encoder>
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
+		</encoder>
+	</appender>
 	<root level="DEBUG">
 		<appender-ref ref="STDOUT" />
+		<appender-ref ref="FILE" />
 	</root>
 	<logger name="org.cool.qqrobot" level="DEBUG" additivity="false">
 		<appender-ref ref="STDOUT" />

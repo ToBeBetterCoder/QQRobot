@@ -4,7 +4,7 @@
 <html lang="zh-cn">
 	<head>
 		<title>QQ机器人</title>
-		<!-- <meta http-equiv="refresh" content="5"> -->
+		<meta http-equiv="refresh" content="5">
 	    <%@include file="common/head.jsp"%>
 	    <style>
 	    	.main-state-info {

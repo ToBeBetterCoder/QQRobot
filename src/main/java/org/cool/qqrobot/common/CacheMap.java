@@ -34,5 +34,15 @@ public class CacheMap {
 		}
 		return false;
 	}
-	
+	/**
+	 * 判断线程是否存活（session过期后再次登录，processDataMap可能不为空，但是threadFuturMap中的线程可能已经结束，所以需要重启线程）
+	 * @param processData
+	 * @return
+	 */
+	public static boolean isThreadAlive(ProcessData processData) {
+		if (null != processData.getSelfUiu() && threadFuturMap.containsKey(processData.getSelfUiu()) && !threadFuturMap.get(processData.getSelfUiu()).isDone()) {
+			return true;
+		}
+		return false;
+	}
 }

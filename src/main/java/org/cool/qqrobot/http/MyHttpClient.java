@@ -153,7 +153,7 @@ public class MyHttpClient {
 					response.close();
 				}
 			} catch (IOException e) {
-				logger.error("httpGet response关闭异常", e);
+				logger.error("response关闭异常", e);
 				throw e;
 			}
 		}

@@ -95,11 +95,7 @@ public class RobotServiceImpl implements RobotService {
 					} else {
 						processData.setGetCode(false);
 					}
-					try {
-						Thread.sleep(Const.DELAY_TIME);
-					} catch (InterruptedException e) {
-						logger.error("线程睡眠异常", e);
-					}
+					threadSleep();
 					if (firstLoginSuccess) {
 						break;
 					}
@@ -181,7 +177,7 @@ public class RobotServiceImpl implements RobotService {
 				processData.setPsessionid(MapUtils.getString(MapUtils.getMap(secondLoginResponse.getJsonMap(), Const.RESULT), Const.P_SESSION_ID));
 				ProcessData dataFromCache = CacheMap.processDataMap.get(processData.getSelfUiu());
 				// 防止重复登陆，当用户session失效后，用户依然可以重复登陆，所以在用户首次登录成功后，以用户QQ号为标识，在CacheMap中记录用户的processData，每次用户登录成功时，判断是否已经登录了，如果之前已经登录，则不进行消息获取。
-				if (null == dataFromCache || !dataFromCache.isLogin()) {
+				if (null == dataFromCache || !dataFromCache.isLogin() || !CacheMap.isThreadAlive(dataFromCache)) {
 					// 获取好友列表、群列表、讨论组列表、个人信息（异步）
 					multipleInfoGet(processData);
 					// 获取在线好友  否则如果不先登录webbQQ会报：{"errmsg":"error!!!","retcode":103} 无法获取消息和发送消息
@@ -192,7 +188,7 @@ public class RobotServiceImpl implements RobotService {
 						} catch (Exception e) {
 							logger.error("获取自动回复列表异常", e);
 							try {
-								Thread.sleep(Const.DELAY_TIME);
+								threadSleep();
 								logger.debug("重新获取自动回复列表");
 								setAutoReply(processData);
 							} catch (Exception e1) {
@@ -230,9 +226,22 @@ public class RobotServiceImpl implements RobotService {
 	}
 
 	private void multipleInfoGet(ProcessData processData) {
-		friendsList(processData);
-		groupsList(processData);
-		discussesList(processData);
+		// 获取联系人列表经常返回异常，现在增加重试措施
+		if (!friendsList(processData)) {
+			threadSleep();
+			logger.debug("重新获取好友列表");
+			friendsList(processData);
+		}
+		if (!groupsList(processData)) {
+			threadSleep();
+			logger.debug("重新获取群列表");
+			groupsList(processData);
+		}
+		if (!discussesList(processData)) {
+			threadSleep();
+			logger.debug("重新获取讨论组列表");
+			discussesList(processData);
+		}
 		ThreadPool.getInstance().getFixedThreadPool().execute(new Runnable() {
 			
 			@Override
@@ -405,7 +414,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 	}
 	
-	private void friendsList(ProcessData processData) {
+	private boolean friendsList(ProcessData processData) {
 		MyHttpRequest friendsRequest = new MyHttpRequest(HttpPost.METHOD_NAME);
 		friendsRequest.getHeaderMap().put(Const.REFERER, Const.REFERER_S);
 		friendsRequest.setUrl("http://s.web2.qq.com/api/get_user_friends2");
@@ -420,6 +429,7 @@ public class RobotServiceImpl implements RobotService {
 		if (MyHttpResponse.S_OK == friendsResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(friendsResponse.getJsonMap(), Const.RET_CODE))) {
 				processData.setFriendsMap(MapUtils.getMap(friendsResponse.getJsonMap(), Const.RESULT));
+				return true;
 			} else {
 				processData.setGetCode(false);
 				logger.error("获取好友列表异常");
@@ -427,9 +437,10 @@ public class RobotServiceImpl implements RobotService {
 		} else {
 			logger.error("获取好友列表异常");
 		}
+		return false;
 	}
 
-	private void groupsList(ProcessData processData) {
+	private boolean groupsList(ProcessData processData) {
 		MyHttpRequest groupsRequest = new MyHttpRequest(HttpPost.METHOD_NAME);
 		groupsRequest.getHeaderMap().put(Const.REFERER, Const.REFERER_S);
 		groupsRequest.setUrl("http://s.web2.qq.com/api/get_group_name_list_mask2");
@@ -444,6 +455,7 @@ public class RobotServiceImpl implements RobotService {
 		if (MyHttpResponse.S_OK == groupsResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(groupsResponse.getJsonMap(), Const.RET_CODE))) {
 				processData.setGroupsMap(MapUtils.getMap(groupsResponse.getJsonMap(), Const.RESULT));
+				return true;
 			} else {
 				processData.setGetCode(false);
 				logger.error("获取群列表异常");
@@ -451,9 +463,10 @@ public class RobotServiceImpl implements RobotService {
 		} else {
 			logger.error("获取群列表异常");
 		}
+		return false;
 	}
 
-	private void discussesList(ProcessData processData) {
+	private boolean discussesList(ProcessData processData) {
 		MyHttpRequest discussesRequest = new MyHttpRequest();
 		discussesRequest.getHeaderMap().put(Const.REFERER, Const.REFERER_S);
 		discussesRequest.setUrl("http://s.web2.qq.com/api/get_discus_list?clientid=53999199&psessionid=" + processData.getPsessionid() + "&vfwebqq=" + processData.getVfwebqq());
@@ -467,6 +480,7 @@ public class RobotServiceImpl implements RobotService {
 		if (MyHttpResponse.S_OK == discussesResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(discussesResponse.getJsonMap(), Const.RET_CODE))) {
 				processData.setDiscussesMap(MapUtils.getMap(discussesResponse.getJsonMap(), Const.RESULT));
+				return true;
 			} else {
 				processData.setGetCode(false);
 				logger.error("获取讨论组列表异常");
@@ -474,6 +488,7 @@ public class RobotServiceImpl implements RobotService {
 		} else {
 			logger.error("获取讨论组列表异常");
 		}
+		return false;
 	}
 
 	private void selfInfo(ProcessData processData) {
@@ -583,6 +598,9 @@ public class RobotServiceImpl implements RobotService {
 		}*/
 	@Override
 	public Map<String, Object> buildFriendsList(ProcessData processData) {
+		if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(processData.getFriendsViewMap(), Const.RET_CODE))) {
+			return processData.getFriendsViewMap();
+		}
 		int retcode = Const.SUCCESS_CODE;
 		Map<String, Object> newFriendsMap = new HashMap<String, Object>();
 		Map<String, Object> friendsMap = processData.getFriendsMap();
@@ -699,6 +717,9 @@ public class RobotServiceImpl implements RobotService {
 
 	@Override
 	public Map<String, Object> buildDiscussesList(ProcessData processData) {
+		if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(processData.getDiscussesViewMap(), Const.RET_CODE))) {
+			return processData.getDiscussesViewMap();
+		}
 		int retcode = Const.SUCCESS_CODE;
 		Map<String, Object> newDiscussesMap = new HashMap<String, Object>();
 		Map<String, Object> discussesMap = processData.getDiscussesMap();
@@ -732,6 +753,9 @@ public class RobotServiceImpl implements RobotService {
 
 	@Override
 	public Map<String, Object> buildGroupsList(ProcessData processData) {
+		if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(processData.getGroupsViewMap(), Const.RET_CODE))) {
+			return processData.getGroupsViewMap();
+		}
 		int retcode = Const.SUCCESS_CODE;
 		Map<String, Object> newGroupsMap = new HashMap<String, Object>();
 		Map<String, Object> groupsMap = processData.getGroupsMap();
@@ -902,8 +926,16 @@ public class RobotServiceImpl implements RobotService {
 		// 5.清除引用
 		processDataSession = null;
 	}
-
+	
 	private void sessionSetter() {
 		session = (((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest()).getSession();
+	}
+	
+	private void threadSleep() {
+		try {
+			Thread.sleep(Const.DELAY_TIME);
+		} catch (InterruptedException e) {
+			logger.error("线程睡眠异常", e);
+		}
 	}
 }

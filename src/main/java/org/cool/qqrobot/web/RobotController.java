@@ -5,11 +5,9 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
-import org.apache.commons.collections.MapUtils;
 import org.cool.qqrobot.common.CacheMap;
 import org.cool.qqrobot.common.Const;
 import org.cool.qqrobot.common.RobotCodeEnums;
-import org.cool.qqrobot.core.DataEngine;
 import org.cool.qqrobot.dto.RobotResult;
 import org.cool.qqrobot.entity.AutoReply;
 import org.cool.qqrobot.entity.ProcessData;
@@ -40,23 +38,14 @@ public class RobotController {
 	
 	@RequestMapping(value="/fun", method = RequestMethod.GET)
 	public String getCodeToLogin(HttpSession session, Model model) {
-		// 通过session判断 防止同一用户多次刷新获取二维码
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
 		if (null != processDataSession && CacheMap.isOnline(processDataSession)) {
 			// 登陆后可以设置是否自动回复，是否自定义回复名单
 			AutoReply autoReply = processDataSession.getAutoReply();
-			Map<String, Object> friendsViewMap = processDataSession.getFriendsViewMap();
-			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(friendsViewMap, Const.RET_CODE))) {
-				friendsViewMap = robotService.buildFriendsList(processDataSession);
-			}
-			Map<String, Object> discussesViewMap = processDataSession.getDiscussesViewMap();
-			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(discussesViewMap, Const.RET_CODE))) {
-				discussesViewMap = robotService.buildDiscussesList(processDataSession);
-			}
-			Map<String, Object> groupsViewMap = processDataSession.getGroupsViewMap();
-			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(groupsViewMap, Const.RET_CODE))) {
-				groupsViewMap = robotService.buildGroupsList(processDataSession);
-			}
+			Map<String, Object> friendsViewMap = robotService.buildFriendsList(processDataSession);
+			Map<String, Object> discussesViewMap = robotService.buildDiscussesList(processDataSession);
+			Map<String, Object> groupsViewMap = robotService.buildGroupsList(processDataSession);
+			
 			model.addAttribute("autoReply", autoReply);
 			model.addAttribute("friendsViewMap", friendsViewMap);
 			model.addAttribute("discussesViewMap", discussesViewMap);
@@ -77,16 +66,6 @@ public class RobotController {
 		}
 	}
 	
-	private RobotResult<Map<String, Object>> successResult() {
-		Map<String, Object> responseMap = new HashMap<String, Object>();
-		responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
-		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
-	}
-	
-	private RobotResult<Map<String, Object>> exceptionResult() {
-		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
-	}
-	
 	@RequestMapping(value="/submitList", method = RequestMethod.POST)
 	@ResponseBody
 	public RobotResult<Map<String, Object>> submitList(@RequestBody Map<String, Object> paramMap, HttpSession session) {
@@ -99,6 +78,7 @@ public class RobotController {
 		}
 		
 	}
+	
 	@RequestMapping(value="/setAutoReply", method = RequestMethod.POST)
 	@ResponseBody
 	public RobotResult<Map<String, Object>> setAutoReply(@RequestBody Map<String, Object> paramMap, HttpSession session) {
@@ -134,5 +114,15 @@ public class RobotController {
 		} catch (RobotException e) {
 			return exceptionResult();
 		}
+	}
+	
+	private RobotResult<Map<String, Object>> successResult() {
+		Map<String, Object> responseMap = new HashMap<String, Object>();
+		responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
+		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
+	}
+	
+	private RobotResult<Map<String, Object>> exceptionResult() {
+		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
 	}
 }

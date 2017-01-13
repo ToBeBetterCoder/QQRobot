@@ -26,8 +26,8 @@ public class sessionInterceptor implements HandlerInterceptor {
 	@Override
 	public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler)
 			throws Exception, RobotException {
-		ProcessData processDataSession = (ProcessData) request.getSession().getAttribute(Const.PROCESS_DATA);
 		logger.debug("path={}", request.getServletPath());
+		ProcessData processDataSession = (ProcessData) request.getSession().getAttribute(Const.PROCESS_DATA);
 		if (null == processDataSession) {
 			logger.debug("session invalid");
 			sessionInvalidReturn(response);
