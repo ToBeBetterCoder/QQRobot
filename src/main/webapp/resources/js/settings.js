@@ -64,12 +64,11 @@ settings = (function() {
 			}
 			// 以前，一直以为在SpringMVC环境中，@RequestBody接收的是一个Json对象，一直在调试代码都没有成功，后来发现，其实 @RequestBody接收的是一个Json对象的字符串，而不是一个Json对象。然而在ajax请求往往传的都是Json对象，后来发现用 JSON.stringify(data)的方式就能将对象变成字符串。同时ajax请求的时候也要指定dataType: "json",contentType:"application/json" 这样就可以轻易的将一个对象或者List传到Java端
 			var source = {
-					url: "submitList",
+					url: _contextPath + "/submitList",
 					data: _replyList
 				};
 			$.callServiceAsJson(source, {
 				success: function(response) {
-					// {"success":true,"code":0,"data":{"info":"设置成功"}}
 					if (response.code == 0) {
 						$("#submitBtn").off("click");
 						$("#submitBtn").prop("disabled", true);
@@ -86,7 +85,7 @@ settings = (function() {
 	};
 	var _replyAllServer = function(flag) {
 		var source = {
-				url: "setReplyAll",
+				url: _contextPath + "/setReplyAll",
 				data: {replyAll: flag ? "off" : "on"}
 			};
 		$.callServiceAsJson(source, {
@@ -103,7 +102,7 @@ settings = (function() {
 	};
 	var _autoReplyServer = function(flag) {
 		var source = {
-				url: "setAutoReply",
+				url: _contextPath + "/setAutoReply",
 				data: {autoReply: flag ? "on" : "off"}
 			};
 		$.callServiceAsJson(source, {
@@ -127,7 +126,7 @@ settings = (function() {
 	var _robotQuit = function() {
 		$("#robotQuitBtn").on("click", function() {
 			var source = {
-					url: "robotQuit"
+					url: _contextPath + "/robotQuit"
 				};
 			$.callServiceAsJsonGet(source, {
 				success: function(response) {
@@ -171,7 +170,5 @@ settings = (function() {
 		// 页面加载显示
 		_pageLoad();
 	};
-	return {
-			init: _init
-		};
+	return {init: _init};
 })();

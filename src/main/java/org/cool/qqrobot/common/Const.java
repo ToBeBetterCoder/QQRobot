@@ -186,5 +186,8 @@ public class Const {
 	 * 二维码失效
 	 */
 	public static final Integer INVALID_CODE = 65;
+	public static final String PATH_PREFIX = "file:";
+	public static final String OS_NAME = "os.name";
+	public static final String WINDOWS = "Windows";
 	
 }

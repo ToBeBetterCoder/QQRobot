@@ -62,4 +62,9 @@ public interface RobotService {
 	 * @param processDataSession
 	 */
 	void quit(ProcessData processDataSession) throws RobotException;
+	/**
+	 * session传递（使用spring的RequestContextHolder session线程获取经常报空指针）
+	 * @param session
+	 */
+	void sessionSetter(HttpSession session);
 }

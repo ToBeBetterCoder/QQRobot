@@ -24,12 +24,12 @@ public class CacheMap {
 		return false;
 	}
 	/**
-	 * 判断是否已经获取过二维码
+	 * 判断是否已经获取过二维码（加 processData.isLogin()判断是有一种情况：app登录后退出了，此时用户离线，pc端刷新后，用户自动退出，此时pc用户session仍存在，二维码仍会显示之前session缓存的，显示登录中，是个bug ）
 	 * @param processData
 	 * @return
 	 */
 	public static boolean hasGetCode(ProcessData processData) {
-		if (!isOnline(processData) && processData.isGetCode()) {
+		if (!isOnline(processData) && processData.isGetCode() && !processData.isLogin()) {
 			return true;
 		}
 		return false;

@@ -14,7 +14,7 @@
 	http://www.springframework.org/schema/mvc 
 	http://www.springframework.org/schema/mvc/spring-mvc.xsd">
 	<!-- 访问项目名称直接转发  -->
-	<mvc:view-controller path="/" view-name="redirect:/fun"/>
+	<mvc:view-controller path="/" view-name="forward:/funnyRobot"/>
 	<!-- 配置SpringMVC -->
 	<!-- 开启Spring注解模式 -->
 	<!-- 简化配置：自动注册，提供一系列数据绑定，数字和日期format,xml,json默认读写支持 -->

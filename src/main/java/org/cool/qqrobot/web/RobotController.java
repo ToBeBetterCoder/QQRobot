@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.servlet.http.HttpSession;
 
+import org.cool.qqrobot.common.AutoReplySetting;
 import org.cool.qqrobot.common.CacheMap;
 import org.cool.qqrobot.common.Const;
 import org.cool.qqrobot.common.RobotCodeEnums;
@@ -18,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -29,14 +31,13 @@ import org.springframework.web.bind.annotation.ResponseBody;
  *
  */
 @Controller
-//@RequestMapping("/robot")
 public class RobotController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
 	private RobotService robotService;
 	
-	@RequestMapping(value="/fun", method = RequestMethod.GET)
+	@RequestMapping(value="/funnyRobot", method = RequestMethod.GET)
 	public String getCodeToLogin(HttpSession session, Model model) {
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
 		if (null != processDataSession && CacheMap.isOnline(processDataSession)) {
@@ -60,6 +61,7 @@ public class RobotController {
 		} else {
 			ProcessData processData = new ProcessData();
 			session.setAttribute(Const.PROCESS_DATA, processData);
+			robotService.sessionSetter(session);
 			String imageCode = robotService.getCode(processData);
 			model.addAttribute("imageCode", imageCode);
 			return "login";
@@ -108,10 +110,38 @@ public class RobotController {
 	public RobotResult<Map<String, Object>> quit(HttpSession session) {
 		ProcessData processDataSession = (ProcessData) session.getAttribute(Const.PROCESS_DATA);
 		try {
+			robotService.sessionSetter(session);
 			robotService.quit(processDataSession);
 			processDataSession = null;
 			return successResult();
 		} catch (RobotException e) {
+			return exceptionResult();
+		}
+	}
+	
+	@RequestMapping(value="/{paramkey}/{paramValue}/defaultParamSet", method = RequestMethod.GET)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> defaultParamSet(@PathVariable("paramkey") String paramkey, @PathVariable("paramValue") String paramValue) {
+		try {
+			if (paramkey.equals("autoReply")) {
+				if (paramValue.equals("1")) {
+					AutoReplySetting.autoReply = true;
+				}
+				if (paramValue.equals("0")) {
+					AutoReplySetting.autoReply = false;
+				}
+			}
+			if (paramkey.equals("special")) {
+				if (paramValue.equals("1")) {
+					AutoReplySetting.special = true;
+				}
+				if (paramValue.equals("0")) {
+					AutoReplySetting.special = false;
+				}
+			}
+			return successResult();
+		} catch (Exception e) {
+			logger.error("默认参数设置异常", e);
 			return exceptionResult();
 		}
 	}

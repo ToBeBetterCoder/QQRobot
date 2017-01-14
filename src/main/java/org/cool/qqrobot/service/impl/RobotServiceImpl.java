@@ -1,5 +1,6 @@
 package org.cool.qqrobot.service.impl;
 
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.text.DecimalFormat;
@@ -40,8 +41,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.request.RequestContextHolder;
-import org.springframework.web.context.request.ServletRequestAttributes;
 
 @Service
 public class RobotServiceImpl implements RobotService {
@@ -206,7 +205,6 @@ public class RobotServiceImpl implements RobotService {
 					}
 					
 				} else {
-					sessionSetter();
 					session.setAttribute(Const.PROCESS_DATA, dataFromCache);
 				}
 			} else {
@@ -537,6 +535,8 @@ public class RobotServiceImpl implements RobotService {
 			} else {
 				processData.setGetCode(false);
 			}
+		} else {
+			processData.setGetCode(false);
 		}
 		return false;
 	}
@@ -546,6 +546,11 @@ public class RobotServiceImpl implements RobotService {
 		ScriptEngine engine = manager.getEngineByName(Const.JAVA_SCRIPT);     
 		// 读取js文件 
 		String jsFileName = this.getClass().getClassLoader().getResource(Const.ROOT_PATH).getPath().replace(Const.CLASSES, Const.JS).substring(1) + Const.JS_FILE_NAME; 
+		// linux环境下必须在文件路径名称前加/，不然找不到文件
+		if (!System.getProperty(Const.OS_NAME).contains(Const.WINDOWS)) {
+			jsFileName = File.separator + jsFileName;
+		}
+		logger.debug("jsFileName:{}", jsFileName);
 		FileReader reader = null;
 		try {
 			reader = new FileReader(jsFileName);
@@ -913,10 +918,9 @@ public class RobotServiceImpl implements RobotService {
 			throw new RobotException(e);
 		}
 		// 2.过程数据引用清除
-		CacheMap.processDataMap.remove(processDataSession.getSelfUiu());
+		CacheMap.processDataMap.put(processDataSession.getSelfUiu(), new ProcessData());
 		// 3.session引用清除
-		sessionSetter();
-		session.removeAttribute(Const.PROCESS_DATA);
+		this.session.removeAttribute(Const.PROCESS_DATA);
 		// 4.记录退出更新时间
 		try {
 			robotDao.updateQuitTime(processDataSession.getUserInfo().getId());
@@ -927,15 +931,16 @@ public class RobotServiceImpl implements RobotService {
 		processDataSession = null;
 	}
 	
-	private void sessionSetter() {
-		session = (((ServletRequestAttributes) RequestContextHolder.getRequestAttributes()).getRequest()).getSession();
-	}
-	
 	private void threadSleep() {
 		try {
 			Thread.sleep(Const.DELAY_TIME);
 		} catch (InterruptedException e) {
 			logger.error("线程睡眠异常", e);
 		}
+	}
+
+	@Override
+	public void sessionSetter(HttpSession session) {
+		this.session = session;
 	}
 }

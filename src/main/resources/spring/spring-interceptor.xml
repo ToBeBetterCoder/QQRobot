@@ -14,7 +14,8 @@
 		<mvc:interceptor>
 			<mvc:mapping path="/**"/>
 			<mvc:exclude-mapping path="/"/>
-			<mvc:exclude-mapping path="/fun"/>
+			<mvc:exclude-mapping path="/*/*/defaultParamSet"/>
+			<mvc:exclude-mapping path="/funnyRobot"/>
 			<mvc:exclude-mapping path="/resources/**"/>
 			<bean class="org.cool.qqrobot.interceptor.sessionInterceptor"></bean>
 		</mvc:interceptor>
