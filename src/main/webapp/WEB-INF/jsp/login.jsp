@@ -19,7 +19,7 @@
   				<br />
   				<br />
   				<br />
-	      		<img src="${imageCode}" alt="看什么看，就是没图" class="img-responsive img-thumbnail">
+	      		<img src="${empty imageCode ? '${pageContext.request.contextPath}/resources/image/arale.jpg' : imageCode}" alt="二维码" class="img-responsive img-thumbnail" />
   				<br />
   				<br />
 	        	<h3 class="main-state-info">
@@ -30,9 +30,9 @@
 	        		<br />
 	        		再次访问此页面可设置回复选项
 	        	</p>
+	        	<img class="not-show" alt="" src="${pageContext.request.contextPath}/resources/image/arale.jpg" />
 			</div>
   		</div>
-	    <%-- <img src="${imageCode}"/> --%>
 	    <%@include file="common/foot.jsp"%>
   	</body>
 </html>

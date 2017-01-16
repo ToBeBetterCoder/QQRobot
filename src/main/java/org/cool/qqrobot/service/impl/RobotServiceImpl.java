@@ -546,7 +546,7 @@ public class RobotServiceImpl implements RobotService {
 		ScriptEngine engine = manager.getEngineByName(Const.JAVA_SCRIPT);     
 		// 读取js文件 
 		String jsFileName = this.getClass().getClassLoader().getResource(Const.ROOT_PATH).getPath().replace(Const.CLASSES, Const.JS).substring(1) + Const.JS_FILE_NAME; 
-		// linux环境下必须在文件路径名称前加/，不然找不到文件
+		// linux环境下必须在文件路径名称前加"/"，不然找不到文件
 		if (!System.getProperty(Const.OS_NAME).contains(Const.WINDOWS)) {
 			jsFileName = File.separator + jsFileName;
 		}
