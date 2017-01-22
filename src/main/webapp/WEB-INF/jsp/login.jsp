@@ -30,7 +30,6 @@
 	        		<br />
 	        		再次访问此页面可退出机器人
 	        	</p>
-	        	<img class="not-show" alt="robot" src="${pageContext.request.contextPath}/resources/image/robot.jpg" />
 			</div>
   		</div>
 	    <%@include file="common/foot.jsp"%>
