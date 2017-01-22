@@ -24,6 +24,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.methods.HttpPost;
 import org.cool.qqrobot.common.CacheMap;
 import org.cool.qqrobot.common.Const;
+import org.cool.qqrobot.common.ProcessVar;
 import org.cool.qqrobot.common.RobotCodeEnums;
 import org.cool.qqrobot.dao.RobotDao;
 import org.cool.qqrobot.dao.cache.RedisDao;
@@ -58,6 +59,7 @@ public class RobotServiceImpl implements RobotService {
 		codeRequest.setUrl("https://ssl.ptlogin2.qq.com/ptqrshow?appid=501004106&e=0&l=M&s=5&d=72&v=4&t=" + Math.random());
 		MyHttpResponse codeResponse = new MyHttpResponse();
 		try {
+			logger.info("|{}|--开始获取二维码", ProcessVar.getProcessId());
 			codeResponse = processData.getMyHttpClient().execute(codeRequest);
 		} catch (Exception e) {
 			logger.error("二维码获取异常", e);
@@ -74,8 +76,8 @@ public class RobotServiceImpl implements RobotService {
 	}
 	
 	private void loginCheck(ProcessData processData) {
+		logger.info("|{}|--二维码验证中", ProcessVar.getProcessId());
 		ThreadPool.getInstance().getFixedThreadPool().execute(new Runnable() {
-			
 			@Override
 			public void run() {
 				for (int i = 0; i < Const.CYCLE_NUM; i++) {
@@ -111,11 +113,13 @@ public class RobotServiceImpl implements RobotService {
 		String[] checkResponseArr = checkResponse.getTextStr().split(",");
 		if (checkResponseArr[0].contains(Const.SUCCESS_CODE.toString())) {
 			// 二维码扫描成功
+			logger.info("二维码扫描成功");
 			processData.setCodeScanned(true);
 			MyHttpRequest firstLoginRequest = new MyHttpRequest();
 			firstLoginRequest.setUrl(checkResponseArr[2].replaceAll("'", ""));
 			MyHttpResponse firstLoginResponse = new MyHttpResponse();
 			try {
+				logger.info("first登陆成功");
 				firstLoginResponse = processData.getMyHttpClient().execute(firstLoginRequest);
 			} catch (Exception e) {
 				processData.setGetCode(false);
@@ -149,6 +153,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		if (MyHttpResponse.S_OK == vfwebqqResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(vfwebqqResponse.getJsonMap(), Const.RET_CODE))) {
+				logger.info("vfwebqq获取成功");
 				processData.setVfwebqq(MapUtils.getString(MapUtils.getMap(vfwebqqResponse.getJsonMap(), Const.RESULT), Const.VFWEBQQ));
 				secondLogin(processData);
 			} else {
@@ -177,6 +182,7 @@ public class RobotServiceImpl implements RobotService {
 				ProcessData dataFromCache = CacheMap.processDataMap.get(processData.getSelfUiu());
 				// 防止重复登陆，当用户session失效后，用户依然可以重复登陆，所以在用户首次登录成功后，以用户QQ号为标识，在CacheMap中记录用户的processData，每次用户登录成功时，判断是否已经登录了，如果之前已经登录，则不进行消息获取。
 				if (null == dataFromCache || !dataFromCache.isLogin() || !CacheMap.isThreadAlive(dataFromCache)) {
+					logger.info("second登录成功（{}）", processData.getSelfUiu());
 					// 获取好友列表、群列表、讨论组列表、个人信息（异步）
 					multipleInfoGet(processData);
 					// 获取在线好友  否则如果不先登录webbQQ会报：{"errmsg":"error!!!","retcode":103} 无法获取消息和发送消息
@@ -184,12 +190,14 @@ public class RobotServiceImpl implements RobotService {
 						// 设置允许自动回复的uin（Tomcat首次启动，数据库经常获取连接失败，现在增加一次获取）
 						try {
 							setAutoReply(processData);
+							logger.info("自动回复设置成功");
 						} catch (Exception e) {
 							logger.error("获取自动回复列表异常", e);
 							try {
 								threadSleep();
 								logger.debug("重新获取自动回复列表");
 								setAutoReply(processData);
+								logger.info("重新获取自动回复设置成功");
 							} catch (Exception e1) {
 								processData.setGetCode(false);
 								logger.error("重新获取自动回复列表异常", e1);
@@ -206,6 +214,7 @@ public class RobotServiceImpl implements RobotService {
 					
 				} else {
 					session.setAttribute(Const.PROCESS_DATA, dataFromCache);
+					logger.info("second登录成功，session已更新（{}）", processData.getSelfUiu());
 				}
 			} else {
 				processData.setGetCode(false);
@@ -224,6 +233,7 @@ public class RobotServiceImpl implements RobotService {
 	}
 
 	private void multipleInfoGet(ProcessData processData) {
+		logger.info("开始获取联系人列表信息");
 		// 获取联系人列表经常返回异常，现在增加重试措施
 		if (!friendsList(processData)) {
 			threadSleep();
@@ -250,6 +260,7 @@ public class RobotServiceImpl implements RobotService {
 	}
 
 	private void pollMessageThread(ProcessData processData) {
+		logger.info("开始轮询消息");
 		// 把每一个轮询线程对象保存到map中，便于终止轮询（key:qq号，value:Future对象），同时清除登录成功的缓存信息，更新退出时间
 		Future<?> future = ThreadPool.getInstance().getScheduledThreadPool().scheduleAtFixedRate(new Runnable() {
 			@Override
@@ -282,11 +293,13 @@ public class RobotServiceImpl implements RobotService {
 						if (StringUtils.isBlank(requestContent)) {
 							return;
 						}
+						logger.info("消息接收:【{}】", requestContent);
 						// 返回空不回复
 						String responseContent = tuRingRobot(processData, fromUin, requestContent);
 						if (StringUtils.isBlank(responseContent)) {
 							return;
 						}
+						logger.info("消息回复:【{}】", responseContent);
 						// 回复消息
 						sendMessage(processData, pollType, fromUin, responseContent);
 					}
@@ -401,6 +414,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		MyHttpResponse sendMessageResponse = new MyHttpResponse();
 		try {
+			logger.info("消息开始回复");
 			sendMessageResponse = processData.getMyHttpClient().execute(sendMessageRequest);
 		} catch (Exception e) {
 			logger.error("sendMessage异常", e);
@@ -408,6 +422,8 @@ public class RobotServiceImpl implements RobotService {
 		if (MyHttpResponse.S_OK == sendMessageResponse.getStatus()) {
 			if (!Const.SUCCESS_CODE.equals(MapUtils.getInteger(sendMessageResponse.getJsonMap(), Const.ERR_CODE))) {
 				logger.debug("sendMessage异常");
+			} else {
+				logger.info("消息回复成功");
 			}
 		}
 	}
@@ -426,6 +442,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		if (MyHttpResponse.S_OK == friendsResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(friendsResponse.getJsonMap(), Const.RET_CODE))) {
+				logger.info("获取好友列表成功");
 				processData.setFriendsMap(MapUtils.getMap(friendsResponse.getJsonMap(), Const.RESULT));
 				return true;
 			} else {
@@ -452,6 +469,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		if (MyHttpResponse.S_OK == groupsResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(groupsResponse.getJsonMap(), Const.RET_CODE))) {
+				logger.info("获取群列表成功");
 				processData.setGroupsMap(MapUtils.getMap(groupsResponse.getJsonMap(), Const.RESULT));
 				return true;
 			} else {
@@ -477,6 +495,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		if (MyHttpResponse.S_OK == discussesResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(discussesResponse.getJsonMap(), Const.RET_CODE))) {
+				logger.info("获取讨论组列表成功");
 				processData.setDiscussesMap(MapUtils.getMap(discussesResponse.getJsonMap(), Const.RESULT));
 				return true;
 			} else {
@@ -502,6 +521,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		if (MyHttpResponse.S_OK == selfInfoResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(selfInfoResponse.getJsonMap(), Const.RET_CODE))) {
+				logger.info("获取个人信息成功");
 				UserInfo userInfo = new UserInfo(selfInfoResponse.getJsonMap(), selfInfoResponse.getTextStr());
 				processData.setUserInfo(userInfo);
 				// 异步记录登录用户信息
@@ -510,6 +530,7 @@ public class RobotServiceImpl implements RobotService {
 					
 					@Override
 					public void run() {
+						logger.info("记录用户登录信息");
 						robotDao.addLoginInfo(userInfo);
 					}
 				});
@@ -530,6 +551,7 @@ public class RobotServiceImpl implements RobotService {
 		}
 		if (MyHttpResponse.S_OK == onlineBuddiesResponse.getStatus()) {
 			if (Const.SUCCESS_CODE.equals(MapUtils.getInteger(onlineBuddiesResponse.getJsonMap(), Const.RET_CODE))) {
+				logger.info("获取在线好友列表成功");
 				processData.setOnlineBuddiesList((List<Map<String, Object>>) MapUtils.getObject(onlineBuddiesResponse.getJsonMap(), Const.RESULT));
 				return true;
 			} else {
@@ -819,6 +841,7 @@ public class RobotServiceImpl implements RobotService {
 			setAutoReply(processDataSession);
 			// 页面联系人视图设置过期标识（需要更新）
 			contactsListViewExpired(processDataSession);
+			logger.info("|{}|--updateReplyNameList success", ProcessVar.getProcessId());
 		} catch (Exception e) {
 			logger.error("设置自定义回复名单异常", e);
 			// 所有编译期异常转化为运行期异常，便于事务回滚
@@ -880,6 +903,7 @@ public class RobotServiceImpl implements RobotService {
 			}
 			robotDao.updateIsAutoReply(autoReplyfalg, processDataSession.getSelfUiu());
 			processDataSession.getAutoReply().setIsAutoReply(autoReplyfalg == 1 ? true : false);
+			logger.info("|{}|--updateIsAutoReply success", ProcessVar.getProcessId());
 		} catch (Exception e) {
 			logger.error("设置自动回复异常", e);
 			throw new RobotException(e);
@@ -899,6 +923,7 @@ public class RobotServiceImpl implements RobotService {
 			}
 			robotDao.updateIsSpecial(specialfalg, processDataSession.getSelfUiu());
 			processDataSession.getAutoReply().setIsSpecial(specialfalg == 1 ? true : false);
+			logger.info("|{}|--updateIsSpecial success", ProcessVar.getProcessId());
 		} catch (Exception e) {
 			logger.error("设置自定义回复异常", e);
 			throw new RobotException(e);
@@ -907,18 +932,22 @@ public class RobotServiceImpl implements RobotService {
 
 	@Override
 	public void quit(ProcessData processDataSession) {
+		String selfUiu = processDataSession.getSelfUiu();
 		// 1.结束线程轮询
 		try {
-			Future<?> future = CacheMap.threadFuturMap.get(processDataSession.getSelfUiu());
+			Future<?> future = CacheMap.threadFuturMap.get(selfUiu);
 			if (null != future && !future.isDone()) {
 				future.cancel(true);
+				logger.info("|{}|--结束消息线程轮询成功", ProcessVar.getProcessId());
+			} else {
+				logger.info("|{}|--未成功结束消息线程轮询", ProcessVar.getProcessId());
 			}
 		} catch (Exception e) {
 			logger.error("线程结束异常", e);
 			throw new RobotException(e);
 		}
 		// 2.过程数据引用清除
-		CacheMap.processDataMap.put(processDataSession.getSelfUiu(), new ProcessData());
+		CacheMap.processDataMap.remove(selfUiu);
 		// 3.session引用清除
 		this.session.removeAttribute(Const.PROCESS_DATA);
 		// 4.记录退出更新时间
@@ -929,6 +958,27 @@ public class RobotServiceImpl implements RobotService {
 		}
 		// 5.清除引用
 		processDataSession = null;
+		logger.info("|{}|--quit success({})", ProcessVar.getProcessId(), selfUiu);
+	}
+	
+	@Override
+	public void popUp(String account) {
+		// 1.结束线程轮询
+		try {
+			Future<?> future = CacheMap.threadFuturMap.get(account);
+			if (null != future && !future.isDone()) {
+				future.cancel(true);
+				logger.info("popUp()结束消息线程轮询成功（{}）", account);
+			} else {
+				logger.info("popUp()未成功结束消息线程轮询（{}）", account);
+			}
+		} catch (Exception e) {
+			logger.error("线程结束异常", e);
+			throw new RobotException(e);
+		}
+		// 2.过程数据引用清除
+		CacheMap.processDataMap.remove(account);
+		logger.info("popUp() quit success({})", account);
 	}
 	
 	private void threadSleep() {

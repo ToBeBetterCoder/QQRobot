@@ -19,7 +19,7 @@
   				<br />
   				<br />
   				<br />
-	      		<img src="${empty imageCode ? '${pageContext.request.contextPath}/resources/image/arale.jpg' : imageCode}" alt="二维码" class="img-responsive img-thumbnail" />
+	      		<img src="${empty imageCode ? '${pageContext.request.contextPath}/resources/image/wall.jpg' : imageCode}" alt="二维码" class="img-responsive img-thumbnail" />
   				<br />
   				<br />
 	        	<h3 class="main-state-info">
@@ -28,9 +28,9 @@
 	        	<p class="text-muted small">
 	        		登录后QQ机器人将自动回复
 	        		<br />
-	        		再次访问此页面可设置回复选项
+	        		再次访问此页面可退出机器人
 	        	</p>
-	        	<img class="not-show" alt="" src="${pageContext.request.contextPath}/resources/image/arale.jpg" />
+	        	<img class="not-show" alt="robot" src="${pageContext.request.contextPath}/resources/image/robot.jpg" />
 			</div>
   		</div>
 	    <%@include file="common/foot.jsp"%>

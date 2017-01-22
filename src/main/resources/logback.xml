@@ -9,11 +9,11 @@
 	<appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
 	 	<rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
 		    <!-- rollover daily -->
-		    <fileNamePattern>robotlog-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
+		    <fileNamePattern>/home/log/robotlog-%d{yyyy-MM-dd}.%i.txt</fileNamePattern>
 		    <!-- each file should be at most 100MB, keep 60 days worth of history, but at most 20GB -->
-		    <maxFileSize>1MB</maxFileSize>    
-		    <maxHistory>5</maxHistory>
-		    <totalSizeCap>20MB</totalSizeCap>
+		    <maxFileSize>2MB</maxFileSize>    
+		    <maxHistory>10</maxHistory>
+		    <totalSizeCap>2GB</totalSizeCap>
 	  	</rollingPolicy>
 		<encoder>
 			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
@@ -34,8 +34,12 @@
 		<appender-ref ref="FILE" />
 		<appender-ref ref="DB" />
 	</root>
-	<logger name="org.cool.qqrobot" level="DEBUG" additivity="false">
+	<logger name="org.cool.qqrobot" level="INFO" additivity="false">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="DB" />
+	</logger>
+	<logger name="org.cool.qqrobot.http.MyHttpClient" level="DEBUG" additivity="false">
+		<appender-ref ref="FILE" />
+		<appender-ref ref="STDOUT" />
 	</logger>
 </configuration>

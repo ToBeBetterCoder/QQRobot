@@ -67,4 +67,9 @@ public interface RobotService {
 	 * @param session
 	 */
 	void sessionSetter(HttpSession session);
+	/**
+	 * 用户被动退出（管理员操作）
+	 * @param account
+	 */
+	void popUp(String account);
 }

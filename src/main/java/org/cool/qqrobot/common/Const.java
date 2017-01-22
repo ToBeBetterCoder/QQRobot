@@ -189,5 +189,7 @@ public class Const {
 	public static final String PATH_PREFIX = "file:";
 	public static final String OS_NAME = "os.name";
 	public static final String WINDOWS = "Windows";
+	public static final String USER_AGENT = "User-Agent";
+	public static final String COUNT = "count";
 	
 }

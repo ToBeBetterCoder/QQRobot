@@ -31,7 +31,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
  *
  */
 @Controller
-public class RobotController {
+public class RobotController extends BaseController {
 	private final Logger logger = LoggerFactory.getLogger(this.getClass());
 	
 	@Autowired
@@ -105,6 +105,11 @@ public class RobotController {
 		}
 	}
 	
+	/**
+	 * 用户主动退出
+	 * @param session
+	 * @return
+	 */
 	@RequestMapping(value="/robotQuit", method = RequestMethod.GET)
 	@ResponseBody
 	public RobotResult<Map<String, Object>> quit(HttpSession session) {
@@ -114,6 +119,38 @@ public class RobotController {
 			robotService.quit(processDataSession);
 			processDataSession = null;
 			return successResult();
+		} catch (RobotException e) {
+			return exceptionResult();
+		}
+	}
+	
+	/**
+	 * 踢出用户
+	 * @param account
+	 * @return
+	 */
+	@RequestMapping(value="/{account}/offline", method = RequestMethod.GET)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> popUp(@PathVariable("account") String account) {
+		try {
+			robotService.popUp(account);
+			return successResult();
+		} catch (RobotException e) {
+			return exceptionResult();
+		}
+	}
+	
+	/**
+	 * 统计轮询消息线程数
+	 * @return
+	 */
+	@RequestMapping(value="/onlineCount", method = RequestMethod.GET)
+	@ResponseBody
+	public RobotResult<Map<String, Object>> onlineCount() {
+		try {
+			Map<String, Object> responseMap = new HashMap<String, Object>();
+			responseMap.put(Const.COUNT, CacheMap.threadFuturMap.size());
+			return successResult(responseMap);
 		} catch (RobotException e) {
 			return exceptionResult();
 		}
@@ -144,15 +181,5 @@ public class RobotController {
 			logger.error("默认参数设置异常", e);
 			return exceptionResult();
 		}
-	}
-	
-	private RobotResult<Map<String, Object>> successResult() {
-		Map<String, Object> responseMap = new HashMap<String, Object>();
-		responseMap.put(Const.INFO, RobotCodeEnums.REQUEST_SUCCESS.getCodeInfo());
-		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_SUCCESS.getCode(), responseMap);
-	}
-	
-	private RobotResult<Map<String, Object>> exceptionResult() {
-		return new RobotResult<Map<String, Object>>(true, RobotCodeEnums.REQUEST_FAIL.getCode(), RobotCodeEnums.REQUEST_FAIL.getCodeInfo());
 	}
 }

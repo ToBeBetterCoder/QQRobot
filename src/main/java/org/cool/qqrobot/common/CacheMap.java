@@ -18,7 +18,7 @@ public class CacheMap {
 	 * @return
 	 */
 	public static boolean isOnline(ProcessData processData) {
-		if (null != processData.getSelfUiu() && processDataMap.containsKey(processData.getSelfUiu()) && processDataMap.get(processData.getSelfUiu()).isLogin()) {
+		if (isThreadAlive(processData) && null != processData.getSelfUiu() && processDataMap.containsKey(processData.getSelfUiu()) && processDataMap.get(processData.getSelfUiu()).isLogin()) {
 			return true;
 		}
 		return false;
