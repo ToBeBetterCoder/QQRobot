@@ -19,7 +19,8 @@ public enum RobotCodeEnums {
 	
 	REQUEST_SUCCESS(0, "操作成功"),
 	REQUEST_FAIL(-1, "操作失败"),
-	SESSION_EXPIRED(1, "会话过期，请重新登录~");
+	SESSION_EXPIRED(1, "会话过期，请重新登录~"),
+	ILLEGAL_ACCESS(-2, "非法访问");
 	private RobotCodeEnums(int code, String codeInfo) {
 		this.code = code;
 		this.codeInfo = codeInfo;

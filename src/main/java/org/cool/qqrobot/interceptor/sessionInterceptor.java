@@ -40,8 +40,18 @@ public class sessionInterceptor implements HandlerInterceptor {
 		return true;
 	}
 
+	@Override
+	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
+			ModelAndView modelAndView) throws Exception {
+	}
+
+	@Override
+	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
+			throws Exception {
+	}
+	
 	private void sessionInvalidReturn(HttpServletResponse response) {
-		response.setContentType("application/json;charset=UTF-8");
+		response.setContentType(Const.CONTENT_TYPE_JSON);
 		PrintWriter out = null;
 		try {
 			out = response.getWriter();
@@ -52,15 +62,4 @@ public class sessionInterceptor implements HandlerInterceptor {
     	out.print(gson.toJson(new RobotResult<Map<String, Object>>(true, RobotCodeEnums.SESSION_EXPIRED.getCode(), RobotCodeEnums.SESSION_EXPIRED.getCodeInfo())));
 	    out.close();
 	}
-
-	@Override
-	public void postHandle(HttpServletRequest request, HttpServletResponse response, Object handler,
-			ModelAndView modelAndView) throws Exception {
-	}
-
-	@Override
-	public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex)
-			throws Exception {
-	}
-
 }
