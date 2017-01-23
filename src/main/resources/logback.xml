@@ -41,7 +41,4 @@
 	<logger name="org.cool.qqrobot.http.MyHttpClient" level="DEBUG" additivity="false">
 		<appender-ref ref="FILE" />
 	</logger>
-	<logger name="org.cool.qqrobot.service" level="DEBUG" additivity="false">
-		<appender-ref ref="FILE" />
-	</logger>
 </configuration>
