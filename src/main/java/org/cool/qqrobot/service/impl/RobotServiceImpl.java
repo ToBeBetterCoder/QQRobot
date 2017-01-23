@@ -933,6 +933,9 @@ public class RobotServiceImpl implements RobotService {
 	@Override
 	public void quit(ProcessData processDataSession) {
 		String selfUiu = processDataSession.getSelfUiu();
+		if (selfUiu == null) {
+			throw new RobotException("selfUiu is null");
+		}
 		// 1.结束线程轮询
 		try {
 			Future<?> future = CacheMap.threadFuturMap.get(selfUiu);
@@ -963,6 +966,9 @@ public class RobotServiceImpl implements RobotService {
 	
 	@Override
 	public void popUp(String account) {
+		if (account == null) {
+			throw new RobotException("account is null");
+		}
 		// 1.结束线程轮询
 		try {
 			Future<?> future = CacheMap.threadFuturMap.get(account);
