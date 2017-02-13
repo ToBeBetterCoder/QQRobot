@@ -22,7 +22,6 @@ var hash2 = function(uin,ptvfwebqq){
 
 };
 
-
 var byte2hex = function(bytes){//bytes array
 	var hex = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
 	var buf = "";
@@ -32,4 +31,11 @@ var byte2hex = function(bytes){//bytes array
 		buf += (hex[bytes[i] & 0xF]);
 	}
 	return buf;
-}
+};
+
+// 校验二维码时，新增了hash验证。入参：ptqrtoken为qrsig的hash
+var hash33 = function(qrsig) {
+    for (var e = 0, i = 0, n = qrsig.length; n > i; ++i)
+        e += (e << 5) + qrsig.charCodeAt(i);
+    return 2147483647 & e
+};

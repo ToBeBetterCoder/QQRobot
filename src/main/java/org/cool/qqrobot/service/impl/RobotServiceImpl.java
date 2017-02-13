@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
+import javax.script.ScriptException;
 import javax.servlet.http.HttpSession;
 
 import org.apache.commons.codec.binary.Base64;
@@ -68,6 +69,7 @@ public class RobotServiceImpl implements RobotService {
 			imageCode = "data:" + codeResponse.getContentType() + ";base64," 
 					+ Base64.encodeBase64String(codeResponse.getImageCode());
 			processData.setImageCode(imageCode);
+			processData.setQrsig(codeResponse.getCookiesValue(Const.QRSIG));
 			// 设置二维码获取成功标识
 			processData.setGetCode(true);
 			loginCheck(processData);
@@ -82,7 +84,7 @@ public class RobotServiceImpl implements RobotService {
 			public void run() {
 				for (int i = 0; i < Const.CYCLE_NUM; i++) {
 					MyHttpRequest checkRequest = new MyHttpRequest();
-					checkRequest.setUrl("https://ssl.ptlogin2.qq.com/ptqrlogin?webqq_type=10&remember_uin=1&login2qq=1&aid=501004106&u1=http%3A%2F%2Fw.qq.com%2Fproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=0-0-9604&mibao_css=m_webqq&t=undefined&g=1&js_type=0&js_ver=10181&login_sig=&pt_randsalt=0");
+					checkRequest.setUrl("https://ssl.ptlogin2.qq.com/ptqrlogin?ptqrtoken=" + checkCodeHashByJs(processData.getQrsig()) + "&webqq_type=10&remember_uin=1&login2qq=1&aid=501004106&u1=http%3A%2F%2Fw.qq.com%2Fproxy.html%3Flogin2qq%3D1%26webqq_type%3D10&ptredirect=0&ptlang=2052&daid=164&from_ui=1&pttype=1&dumy=&fp=loginerroralert&action=0-0-9604&mibao_css=m_webqq&t=undefined&g=1&js_type=0&js_ver=10181&login_sig=&pt_randsalt=0");
 					MyHttpResponse checkResponse = new MyHttpResponse();
 					try {
 						checkResponse = processData.getMyHttpClient().execute(checkRequest);
@@ -432,7 +434,7 @@ public class RobotServiceImpl implements RobotService {
 		MyHttpRequest friendsRequest = new MyHttpRequest(HttpPost.METHOD_NAME);
 		friendsRequest.getHeaderMap().put(Const.REFERER, Const.REFERER_S);
 		friendsRequest.setUrl("http://s.web2.qq.com/api/get_user_friends2");
-		friendsRequest.getPostMap().put(Const.R, "{\"vfwebqq\":\"" + processData.getVfwebqq() + "\",\"hash\":\"" + hashByJs(processData.getSelfUiu(), processData.getPtwebqq()) + "\"}");
+		friendsRequest.getPostMap().put(Const.R, "{\"vfwebqq\":\"" + processData.getVfwebqq() + "\",\"hash\":\"" + getFriendsHashByJs(processData.getSelfUiu(), processData.getPtwebqq()) + "\"}");
 		MyHttpResponse friendsResponse = new MyHttpResponse();
 		try {
 			friendsResponse = processData.getMyHttpClient().execute(friendsRequest);
@@ -459,7 +461,7 @@ public class RobotServiceImpl implements RobotService {
 		MyHttpRequest groupsRequest = new MyHttpRequest(HttpPost.METHOD_NAME);
 		groupsRequest.getHeaderMap().put(Const.REFERER, Const.REFERER_S);
 		groupsRequest.setUrl("http://s.web2.qq.com/api/get_group_name_list_mask2");
-		groupsRequest.getPostMap().put(Const.R, "{\"vfwebqq\":\"" + processData.getVfwebqq() + "\",\"hash\":\"" + hashByJs(processData.getSelfUiu(), processData.getPtwebqq()) + "\"}");
+		groupsRequest.getPostMap().put(Const.R, "{\"vfwebqq\":\"" + processData.getVfwebqq() + "\",\"hash\":\"" + getFriendsHashByJs(processData.getSelfUiu(), processData.getPtwebqq()) + "\"}");
 		MyHttpResponse groupsResponse = new MyHttpResponse();
 		try {
 			groupsResponse = processData.getMyHttpClient().execute(groupsRequest);
@@ -563,7 +565,31 @@ public class RobotServiceImpl implements RobotService {
 		return false;
 	}
 
-	private String hashByJs(String selfUiu, String ptwebqq) {
+	private String getFriendsHashByJs(String selfUiu, String ptwebqq) {
+		Invocable invocable = getJsEngine();
+		if (null != invocable) {
+			try {
+				return (String) getJsEngine().invokeFunction(Const.JS_HASH_FRIENDS, selfUiu, ptwebqq);
+			} catch (NoSuchMethodException | ScriptException e) {
+				logger.error("获取好友js执行运算HASH异常", e);
+			}   
+		}
+		return "";
+	}
+
+	private Integer checkCodeHashByJs(String qrsig) {
+		Invocable invocable = getJsEngine();
+		if (null != invocable) {
+			try {
+				return (Integer) getJsEngine().invokeFunction(Const.JS_HASH_CODE, qrsig);
+			} catch (NoSuchMethodException | ScriptException e) {
+				logger.error("验证二维码js执行运算HASH异常", e);
+			}   
+		}
+		return null;
+	}
+	
+	private Invocable getJsEngine() {
 		ScriptEngineManager manager = new ScriptEngineManager(); 
 		ScriptEngine engine = manager.getEngineByName(Const.JAVA_SCRIPT);     
 		// 读取js文件 
@@ -579,8 +605,7 @@ public class RobotServiceImpl implements RobotService {
 			engine.eval(reader);   
 			if(engine instanceof Invocable) {    
 				Invocable invoke = (Invocable)engine;
-				// 执行js函数
-				return (String) invoke.invokeFunction(Const.JS_HASH, selfUiu, ptwebqq);    
+				return invoke;    
 			}  
 		} catch (Exception e) {
 			logger.error("js执行运算HASH异常", e);
@@ -593,9 +618,8 @@ public class RobotServiceImpl implements RobotService {
 				}  
 			}
 		}
-		return "";
+		return null;
 	}
-
 	/*
 	 * 返回样例
 	 * {

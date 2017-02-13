@@ -8,7 +8,6 @@ import javax.servlet.http.HttpSession;
 import org.cool.qqrobot.common.AutoReplySetting;
 import org.cool.qqrobot.common.CacheMap;
 import org.cool.qqrobot.common.Const;
-import org.cool.qqrobot.common.RobotCodeEnums;
 import org.cool.qqrobot.dto.RobotResult;
 import org.cool.qqrobot.entity.AutoReply;
 import org.cool.qqrobot.entity.ProcessData;

@@ -111,7 +111,8 @@ public class Const {
 	public static final String P_SESSION_ID = "psessionid";
 	public static final String JAVA_SCRIPT = "javascript";
 	public static final String JS_FILE_NAME = "hash.js";
-	public static final String JS_HASH = "hash2";
+	public static final String JS_HASH_FRIENDS = "hash2";
+	public static final String JS_HASH_CODE = "hash33";
 	/**
 	 * war包下class目录名称
 	 */
@@ -191,5 +192,6 @@ public class Const {
 	public static final String WINDOWS = "Windows";
 	public static final String USER_AGENT = "User-Agent";
 	public static final String COUNT = "count";
+	public static final String QRSIG = "qrsig";
 	
 }

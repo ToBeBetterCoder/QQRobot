@@ -23,6 +23,8 @@ public class ProcessData {
 	private boolean isCodeScanned = false;
 	private boolean isLogin = false;
 	private transient String imageCode;
+	// 二维码cookie标识
+	private String qrsig;
 	private String ptwebqq;
 	private String selfUiu;
 	private String psessionid;
@@ -222,4 +224,10 @@ public class ProcessData {
 		this.groupsViewMap = processData.getGroupsViewMap();
 		this.discussesViewMap = processData.getDiscussesViewMap();
 	}*/
+	public String getQrsig() {
+		return qrsig;
+	}
+	public void setQrsig(String qrsig) {
+		this.qrsig = qrsig;
+	}
 }

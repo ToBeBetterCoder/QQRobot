@@ -23,7 +23,7 @@
     	<connectionSource class="ch.qos.logback.core.db.DataSourceConnectionSource">
 	        <dataSource class="com.mchange.v2.c3p0.ComboPooledDataSource">
 		        <driverClass>com.mysql.jdbc.Driver</driverClass>
-		        <jdbcUrl>jdbc:mysql://118.89.104.97:3306/qq_robot?characterEncoding=utf8</jdbcUrl>
+		        <jdbcUrl>jdbc:mysql://127.0.0.1:3306/qq_robot?characterEncoding=utf8</jdbcUrl>
 		        <user>root</user>
 		        <password>xuV2TkxciU4F</password>
 	        </dataSource>
@@ -34,7 +34,7 @@
 		<appender-ref ref="FILE" />
 		<appender-ref ref="DB" />
 	</root>
-	<logger name="org.cool.qqrobot" level="INFO" additivity="false">
+	<logger name="org.cool.qqrobot" level="DEBUG" additivity="false">
 		<appender-ref ref="STDOUT" />
 		<appender-ref ref="DB" />
 	</logger>
