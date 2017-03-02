@@ -965,6 +965,7 @@ public class RobotServiceImpl implements RobotService {
 			Future<?> future = CacheMap.threadFuturMap.get(selfUiu);
 			if (null != future && !future.isDone()) {
 				future.cancel(true);
+				CacheMap.threadFuturMap.remove(selfUiu);
 				logger.info("|{}|--结束消息线程轮询成功", ProcessVar.getProcessId());
 			} else {
 				logger.info("|{}|--未成功结束消息线程轮询", ProcessVar.getProcessId());
