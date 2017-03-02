@@ -598,7 +598,7 @@ public class RobotServiceImpl implements RobotService {
 		if (!System.getProperty(Const.OS_NAME).contains(Const.WINDOWS)) {
 			jsFileName = File.separator + jsFileName;
 		}
-		logger.debug("jsFileName:{}", jsFileName);
+		// logger.debug("jsFileName:{}", jsFileName);
 		FileReader reader = null;
 		try {
 			reader = new FileReader(jsFileName);
